@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "257346635753",
+    "project_id": "pawly-fb8b4",
+    "storage_bucket": "pawly-fb8b4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:257346635753:android:22d1392d4f5e8738032d78",
+        "android_client_info": {
+          "package_name": "com.pawly.pawly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcY90tAj9IFldQrTGRP45wduuPqP2aXuM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
