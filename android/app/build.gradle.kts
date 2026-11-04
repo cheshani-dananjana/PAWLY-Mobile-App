@@ -1,14 +1,15 @@
 plugins {
     id("com.android.application")
+    id("kotlin-android") // Added Kotlin plugin
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
-    id("com.google.gms.google-services")
+    id("com.google.gms.google-services") // Added Firebase Google Services plugin
 }
 
 android {
     namespace = "com.pawly.pawly"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "30.0.16248370"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -32,8 +33,7 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            
             signingConfig = signingConfigs.getByName("debug")
         }
     }
