@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'features/animals/create_post_screen.dart'; // 1. Add your screen import
+import 'features/auth/screens/welcome_screen.dart';
+import 'features/animals/create_post_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,13 +15,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PAWLY',
       debugShowCheckedModeBanner: false,
-      // Apply your global theme here if configured:
-      // theme: buildPawlyTheme(), 
-      
-      // 2. Set your working screen as the starting view:
-      home: const CreatePostScreen(), 
+title: 'PAWLY',
+        theme: ThemeData(
+          useMaterial3: true,
+          scaffoldBackgroundColor: const Color(0xFF251605),
+        ),
+        home: const WelcomeScreen(),
     );
   }
 }
