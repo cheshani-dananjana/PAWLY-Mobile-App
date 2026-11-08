@@ -208,7 +208,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       body: SafeArea(
         child: Stack(
           children: [
-                        Column(
+            Column(
               children: [
                 const SizedBox(height: 17),
 
@@ -217,7 +217,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   animation: _glowAnimation,
                   builder: (context, child) {
                     return Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: softCream.withOpacity(0.12),
                         shape: BoxShape.circle,
@@ -241,90 +241,62 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     );
                   },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 18),
 
                 // Rounded PAWLY wordmark, matching the warm pet-friendly theme.
                 Text(
                   'PAWLY',
                   style: GoogleFonts.getFont(
                     'Fredoka',
-                    fontSize: 42,
+                    fontSize: 70,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: 2.0,
+                    letterSpacing: 3.0,
                     height: 1.1,
                     color: softCream,
                     shadows: const [
                       Shadow(
                         color: Colors.black26,
-                        offset: Offset(0, 2),
+                        offset: Offset(0, 10),
                         blurRadius: 3,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
-
-                // Subtitle Line
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 20,
-                      height: 1.5,
-                      color: burntOrange.withOpacity(0.7),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      "YOUR PET'S BEST FRIEND",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2.2,
-                        color: burntOrange,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 20,
-                      height: 1.5,
-                      color: burntOrange.withOpacity(0.7),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 18),
 
                 const SizedBox(height: 12),
                 Transform.translate(
-                  offset: const Offset(0, 6),
+                  offset: const Offset(0, 3),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-Text(
-                  'Adopt Your\nNew Best Friend',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.getFont(
-                    'Nunito',
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    height: 1.08,
-                    color: softCream,
+                      Text(
+                        'Adopt Your\nNew Best Friend',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.getFont(
+                          'Nunito',
+                          fontSize: 40,
+                          fontWeight: FontWeight.w800,
+                          height: 1.08,
+                          color: softCream,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Find loving, adoptable pets and\ngive them a forever home.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.getFont(
+                          'Nunito',
+                          fontSize: 24,
+                          fontWeight: FontWeight.w500,
+                          height: 1.3,
+                          color: softCream.withOpacity(0.82),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Find loving, adoptable pets and\ngive them a forever home.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.getFont(
-                    'Nunito',
-                    fontSize: 24,
-                    fontWeight: FontWeight.w500,
-                    height: 1.3,
-                    color: softCream.withOpacity(0.82),
-                  ),
-                ),
-                                  ],
-                ),
-                ),
-const SizedBox(height: 10),
+                const SizedBox(height: 18),
 
                 // 3D Coverflow Carousel Section with Mouse & Touch Dragging
                 Expanded(
@@ -333,7 +305,7 @@ const SizedBox(height: 10),
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         SizedBox(
-                          height: 270,
+                          height: 300,
                           child: NotificationListener<ScrollNotification>(
                             onNotification: (notification) {
                               if (notification.depth != 0) return false;
@@ -525,7 +497,7 @@ const SizedBox(height: 10),
 
                 // Bottom Action Buttons
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                  padding: const EdgeInsets.fromLTRB(28.0, 10.0, 28.0, 0.0),
                   child: Column(
                     children: [
                       AnimatedBuilder(
@@ -599,7 +571,7 @@ const SizedBox(height: 10),
                                       letterSpacing: 0.5,
                                     ),
                                   ),
-                                  SizedBox(width: 8),
+                                  SizedBox(width: 6),
                                   Icon(Icons.arrow_forward_rounded, size: 20),
                                 ],
                               ),
