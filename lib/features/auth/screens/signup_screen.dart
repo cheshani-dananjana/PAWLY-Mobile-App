@@ -48,7 +48,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
     setState(() => _isLoading = true);
 
-    String? error = await _authService.signUp(name, email, password);
+    String phone = _phoneController.text.trim();
+
+    String? error = await _authService.signUp(name, email, password, phone);
 
     setState(() => _isLoading = false);
 
