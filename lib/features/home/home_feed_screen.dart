@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import '../animals/create_post_screen.dart';
 
 class PawlyColors {
@@ -181,7 +180,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 ),
         ),
       ),
-      bottomNavigationBar: _PawlyBottomNav(
+      bottomNavigationBar: PawlyBottomNav(
         currentIndex: _tabIndex,
         onTap: _onNavTap,
       ),
@@ -1044,8 +1043,8 @@ class _PlaceholderTab extends StatelessWidget {
   }
 }
 
-class _PawlyBottomNav extends StatelessWidget {
-  const _PawlyBottomNav({required this.currentIndex, required this.onTap});
+class PawlyBottomNav extends StatelessWidget {
+  const PawlyBottomNav({required this.currentIndex, required this.onTap});
 
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -1074,7 +1073,7 @@ class _PawlyBottomNav extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Expanded(
-                child: _NavItem(
+                child: NavItem(
                   icon: Icons.home_outlined,
                   activeIcon: Icons.home_rounded,
                   label: 'Home',
@@ -1083,7 +1082,7 @@ class _PawlyBottomNav extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: _NavItem(
+                child: NavItem(
                   icon: Icons.add_circle_outline_rounded,
                   activeIcon: Icons.add_circle_rounded,
                   label: 'Post',
@@ -1092,7 +1091,7 @@ class _PawlyBottomNav extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: _NavItem(
+                child: NavItem(
                   icon: Icons.favorite_border_rounded,
                   activeIcon: Icons.favorite_rounded,
                   label: 'Saved',
@@ -1101,7 +1100,7 @@ class _PawlyBottomNav extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: _NavItem(
+                child: NavItem(
                   icon: Icons.person_outline_rounded,
                   activeIcon: Icons.person_rounded,
                   label: 'Profile',
@@ -1117,8 +1116,8 @@ class _PawlyBottomNav extends StatelessWidget {
   }
 }
 
-class _NavItem extends StatelessWidget {
-  const _NavItem({
+class NavItem extends StatelessWidget {
+  const NavItem({
     required this.icon,
     required this.activeIcon,
     required this.label,

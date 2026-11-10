@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../home/home_feed_screen.dart';
 
 /// PAWLY global theme colors
 class PawlyColors {
@@ -232,6 +233,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             ),
           ),
         ),
+      ),
+      bottomNavigationBar: PawlyBottomNav(
+        currentIndex: 1, // Highlights the 'Post' tab
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pop(context); // Takes you back to Home when Home is tapped
+          }
+        },
       ),
     );
   }
