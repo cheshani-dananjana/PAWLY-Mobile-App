@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:pawly/features/home/home_feed_screen.dart';
 
 import '../services/auth_service.dart';
 import 'forgot_password_screen.dart';
@@ -183,7 +184,10 @@ class _LoginScreenState extends State<LoginScreen>
       if (error != null) {
         _showMessage(error, isError: true);
       } else {
-        _showMessage("Welcome back! Login successful 🐾");
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => HomeFeedScreen()),
+          (route) => false,
+        );
       }
     } catch (e) {
       if (!mounted) return;
