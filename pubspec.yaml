@@ -12,13 +12,13 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  firebase_core: ^5.1.0
+firebase_core: ^5.1.0
   firebase_auth: ^7.0.1
   cloud_firestore: ^7.1.0
   firebase_storage: ^14.0.1
-  google_fonts: ^9.0.0
   image_picker: ^1.2.4
   flutter_animate: ^4.5.2
+  google_fonts: ^9.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -27,6 +27,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
   assets:
-    - assets/images/
+    - assets/images/Pet1.png.png
+    - assets/images/Pet2.png.png
+    - assets/images/Pet3.png.png
+    - assets/images/Pet4.png.png
+    - assets/images/Pet5.png.png
+    - assets/images/Pet6.png.png
+    - assets/images/Pet7.png.png
