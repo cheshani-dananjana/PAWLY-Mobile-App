@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -96,16 +97,84 @@ class _LoginScreenState extends State<LoginScreen>
       );
       try {
         final frame = await codec.getNextFrame();
+        final recolored = await _matchAffectionPalette(frame.image);
         if (!mounted) {
-          frame.image.dispose();
+          recolored.dispose();
           return;
         }
-        setState(() => _affectionAtlas = frame.image);
+        setState(() => _affectionAtlas = recolored);
       } finally {
         codec.dispose();
       }
     } catch (error) {
       debugPrint('Unable to load the login cuddle animation: $error');
+    }
+  }
+
+  // Recolour only the teal hair and pink clothing in all four poses.
+  // Keep the original alpha, shading, skin and animal colours.
+  Future<ui.Image> _matchAffectionPalette(ui.Image original) async {
+    final data = await original.toByteData(
+      format: ui.ImageByteFormat.rawStraightRgba,
+    );
+    if (data == null) return original;
+
+    final pixels = Uint8List.fromList(
+      data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+    );
+
+    for (var i = 0; i < pixels.length; i += 4) {
+      if (pixels[i + 3] == 0) continue;
+
+      final source = HSVColor.fromColor(
+        Color.fromARGB(255, pixels[i], pixels[i + 1], pixels[i + 2]),
+      );
+      final hue = source.hue;
+      HSVColor? target;
+
+      // Teal hair becomes warm chocolate brown.
+      if (hue >= 145 && hue <= 205 && source.saturation > 0.16) {
+        target = HSVColor.fromAHSV(
+          1,
+          25,
+          (source.saturation * 0.65).clamp(0.0, 1.0).toDouble(),
+          (source.value * 0.72).clamp(0.0, 1.0).toDouble(),
+        );
+      }
+      // Pink / burgundy clothing becomes burnt orange.
+      else if (hue >= 320 && hue <= 355 && source.saturation > 0.28) {
+        target = HSVColor.fromAHSV(
+          1,
+          27,
+          (source.saturation * 1.05).clamp(0.0, 1.0).toDouble(),
+          (source.value * 0.96).clamp(0.0, 1.0).toDouble(),
+        );
+      }
+
+      if (target != null) {
+        final value = target.toColor().toARGB32();
+        pixels[i] = (value >> 16) & 255;
+        pixels[i + 1] = (value >> 8) & 255;
+        pixels[i + 2] = value & 255;
+      }
+    }
+
+    final buffer = await ui.ImmutableBuffer.fromUint8List(pixels);
+    final descriptor = ui.ImageDescriptor.raw(
+      buffer,
+      width: original.width,
+      height: original.height,
+      pixelFormat: ui.PixelFormat.rgba8888,
+    );
+    final codec = await descriptor.instantiateCodec();
+    try {
+      final frame = await codec.getNextFrame();
+      original.dispose();
+      return frame.image;
+    } finally {
+      codec.dispose();
+      descriptor.dispose();
+      buffer.dispose();
     }
   }
 
