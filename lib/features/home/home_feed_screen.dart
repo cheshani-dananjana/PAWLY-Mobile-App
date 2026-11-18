@@ -3,7 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../animals/create_post_screen.dart';
+import '../map/map_screen.dart';
+import '../profile/profile_screen.dart';
 
 class PawlyColors {
   PawlyColors._();
@@ -28,33 +31,28 @@ class PawlyText {
     FontWeight weight = FontWeight.w700,
     Color color = PawlyColors.espresso,
     double? height,
-  }) =>
-      GoogleFonts.lora(
-        fontSize: size,
-        fontWeight: weight,
-        color: color,
-        height: height,
-      );
+  }) => GoogleFonts.lora(
+    fontSize: size,
+    fontWeight: weight,
+    color: color,
+    height: height,
+  );
 
   static TextStyle sans({
     double size = 14,
     FontWeight weight = FontWeight.w600,
     Color color = PawlyColors.espresso,
     double? letterSpacing,
-  }) =>
-      GoogleFonts.dmSans(
-        fontSize: size,
-        fontWeight: weight,
-        color: color,
-        letterSpacing: letterSpacing,
-      );
+  }) => GoogleFonts.dmSans(
+    fontSize: size,
+    fontWeight: weight,
+    color: color,
+    letterSpacing: letterSpacing,
+  );
 }
 
 class HomeFeedScreen extends StatefulWidget {
-  const HomeFeedScreen({
-    super.key,
-    this.onViewMap,
-  });
+  const HomeFeedScreen({super.key, this.onViewMap});
 
   final VoidCallback? onViewMap;
 
@@ -84,7 +82,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
 
   final Set<String> _favorites = {};
 
-  late Stream<QuerySnapshot>_postsStream = _buildPostsStream();
+  late Stream<QuerySnapshot> _postsStream = _buildPostsStream();
 
   Stream<QuerySnapshot> _buildPostsStream() {
     Query query = FirebaseFirestore.instance.collection('posts');
@@ -121,16 +119,13 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
       widget.onViewMap!();
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Map view is coming soon.')),
-    );
+    setState(() => _tabIndex = 2);
   }
 
   void _onNavTap(int index) {
     if (index == 1) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const CreatePostScreen()),
-      );
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const CreatePostScreen()));
       return;
     }
     setState(() => _tabIndex = index);
@@ -151,6 +146,23 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Widget currentBody;
+    if (_tabIndex == 0) {
+      currentBody = _buildFeed();
+    } else if (_tabIndex == 2) {
+      currentBody = MapScreen(); // Map Screen (Index 2)
+    } else if (_tabIndex == 3) {
+      currentBody = const _PlaceholderTab(
+        icon: Icons.favorite_rounded,
+        title: 'Saved paws',
+        message: 'Animals you save will show up here.',
+      );
+    } else if (_tabIndex == 4) {
+      currentBody = ProfileScreen(); // Profile Screen (Index 4)
+    } else {
+      currentBody = _buildFeed();
+    }
+
     return Scaffold(
       backgroundColor: PawlyColors.cream,
       extendBody: false,
@@ -159,26 +171,11 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              PawlyColors.amber,
-              Color(0xFFFCEFD0),
-              PawlyColors.cream,
-            ],
+            colors: [PawlyColors.amber, Color(0xFFFCEFD0), PawlyColors.cream],
             stops: [0.0, 0.42, 1.0],
           ),
         ),
-        child: SafeArea(
-          bottom: false,
-          child: _tabIndex == 0
-              ? _buildFeed()
-              : _PlaceholderTab(
-                  icon: _tabIndex == 2 ? Icons.favorite_rounded : Icons.person_rounded,
-                  title: _tabIndex == 2 ? 'Saved paws' : 'Your profile',
-                  message: _tabIndex == 2
-                      ? 'Animals you save will show up here.'
-                      : 'Profile settings are on the way.',
-                ),
-        ),
+        child: SafeArea(bottom: false, child: currentBody),
       ),
       bottomNavigationBar: PawlyBottomNav(
         currentIndex: _tabIndex,
@@ -209,7 +206,8 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
               );
             }
 
-            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
               return const SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(
@@ -230,7 +228,9 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 hasScrollBody: false,
                 child: _StatusMessage(
                   icon: Icons.pets_rounded,
-                  title: searching ? 'No paws match your search' : 'No animals here yet',
+                  title: searching
+                      ? 'No paws match your search'
+                      : 'No animals here yet',
                   message: searching
                       ? 'Try a different name, breed or neighborhood.'
                       : 'Spotted an animal that needs help? Tap Post to add the first one.',
@@ -249,11 +249,11 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                   final delay = (index < 5 ? index * 90 : 0).ms;
 
                   return _PostCard(
-                    data: data,
-                    isFavorite: _favorites.contains(doc.id),
-                    onFavorite: () => _toggleFavorite(doc.id),
-                    onOpen: () => _openPost(doc.id, data),
-                  )
+                        data: data,
+                        isFavorite: _favorites.contains(doc.id),
+                        onFavorite: () => _toggleFavorite(doc.id),
+                        onOpen: () => _openPost(doc.id, data),
+                      )
                       .animate(key: ValueKey(doc.id))
                       .fadeIn(
                         duration: 380.ms,
@@ -286,7 +286,8 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
 
   Widget _buildHeader() {
     final user = FirebaseAuth.instance.currentUser;
-    final displayName = user?.displayName ?? user?.email?.split('@').first ?? 'Guest User';
+    final displayName =
+        user?.displayName ?? user?.email?.split('@').first ?? 'Guest User';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
@@ -295,7 +296,11 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.pets_rounded, color: PawlyColors.espresso, size: 26),
+              const Icon(
+                Icons.pets_rounded,
+                color: PawlyColors.espresso,
+                size: 26,
+              ),
               const SizedBox(width: 8),
               Text(
                 'PAWLY',
@@ -306,7 +311,11 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 ),
               ),
               const Spacer(),
-              const Icon(Icons.account_circle_rounded, size: 18, color: PawlyColors.burntOrange),
+              const Icon(
+                Icons.account_circle_rounded,
+                size: 18,
+                color: PawlyColors.burntOrange,
+              ),
               const SizedBox(width: 6),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 130),
@@ -322,9 +331,9 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
           ),
           const SizedBox(height: 22),
           Text(
-            'Small acts.\nSecond chances.',
-            style: PawlyText.serif(size: 34, height: 1.12),
-          )
+                'Small acts.\nSecond chances.',
+                style: PawlyText.serif(size: 34, height: 1.12),
+              )
               .animate()
               .fadeIn(duration: 500.ms, curve: Curves.easeOut)
               .slideY(
@@ -354,7 +363,11 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
             onTap: () {},
             child: const Padding(
               padding: EdgeInsets.all(10),
-              child: Icon(Icons.notifications_none_rounded, color: PawlyColors.espresso, size: 22),
+              child: Icon(
+                Icons.notifications_none_rounded,
+                color: PawlyColors.espresso,
+                size: 22,
+              ),
             ),
           ),
         ),
@@ -402,11 +415,18 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
             weight: FontWeight.w500,
             color: PawlyColors.muted,
           ),
-          prefixIcon: const Icon(Icons.search_rounded, color: PawlyColors.burntOrange),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: PawlyColors.burntOrange,
+          ),
           suffixIcon: _searchQuery.isEmpty
               ? null
               : IconButton(
-                  icon: const Icon(Icons.close_rounded, color: PawlyColors.muted, size: 20),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: PawlyColors.muted,
+                    size: 20,
+                  ),
                   onPressed: () {
                     _searchController.clear();
                     setState(() => _searchQuery = '');
@@ -528,7 +548,9 @@ class _FilterChipButtonState extends State<_FilterChipButton> {
             ),
             boxShadow: [
               BoxShadow(
-                color: PawlyColors.burntOrange.withOpacity(selected ? 0.35 : 0.0),
+                color: PawlyColors.burntOrange.withOpacity(
+                  selected ? 0.35 : 0.0,
+                ),
                 blurRadius: selected ? 16 : 0,
                 offset: Offset(0, selected ? 6 : 0),
               ),
@@ -540,7 +562,8 @@ class _FilterChipButtonState extends State<_FilterChipButton> {
               TweenAnimationBuilder<Color?>(
                 tween: ColorTween(end: iconColor),
                 duration: const Duration(milliseconds: 300),
-                builder: (context, color, _) => Icon(widget.icon, size: 17, color: color),
+                builder: (context, color, _) =>
+                    Icon(widget.icon, size: 17, color: color),
               ),
               const SizedBox(width: 7),
               AnimatedDefaultTextStyle(
@@ -561,42 +584,6 @@ class _FilterChipButtonState extends State<_FilterChipButton> {
   }
 }
 
-class _TypeStyle {
-  const _TypeStyle(this.icon, this.background, this.foreground);
-  final IconData icon;
-  final Color background;
-  final Color foreground;
-
-  static _TypeStyle of(String type) {
-    switch (type.toLowerCase()) {
-      case 'adoption':
-        return const _TypeStyle(
-          Icons.favorite_border_rounded,
-          Color(0xFFE6F0D6),
-          Color(0xFF3E6B2B),
-        );
-      case 'lost':
-        return const _TypeStyle(
-          Icons.search_rounded,
-          Color(0xFFFFDCC6),
-          PawlyColors.burntOrange,
-        );
-      case 'stray':
-        return const _TypeStyle(
-          Icons.pets_rounded,
-          Color(0xFFFFEBC2),
-          Color(0xFF8A5200),
-        );
-      default:
-        return const _TypeStyle(
-          Icons.pets_rounded,
-          PawlyColors.surface,
-          PawlyColors.espresso,
-        );
-    }
-  }
-}
-
 class _PostCard extends StatelessWidget {
   const _PostCard({
     required this.data,
@@ -610,13 +597,11 @@ class _PostCard extends StatelessWidget {
   final VoidCallback onFavorite;
   final VoidCallback onOpen;
 
-  static const _fallbackImage = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1';
-
   String? _ageLabel(dynamic age) {
     if (age == null) return null;
     if (age is num) {
       final n = age % 1 == 0 ? age.toInt().toString() : age.toString();
-      return '$n ${age == 1 ? 'year' : 'years'}';
+      return '$n${age == 1 ? 'year' : 'years'}';
     }
     final s = age.toString().trim();
     return s.isEmpty ? null : s;
@@ -632,13 +617,12 @@ class _PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = (data['animalName'] as String?)?.trim();
-    final type = (data['postType'] as String?)?.trim() ?? '';
     final imageUrl = (data['imageUrl'] as String?)?.trim();
 
-    final subtitle = [_ageLabel(data['age']), (data['breed'] as String?)?.trim()]
-        .whereType<String>()
-        .where((e) => e.isNotEmpty)
-        .join(' · ');
+    final subtitle = [
+      _ageLabel(data['age']),
+      (data['breed'] as String?)?.trim(),
+    ].whereType<String>().where((e) => e.isNotEmpty).join(' · ');
 
     final location = [
       (data['location'] as String?)?.trim(),
@@ -669,273 +653,90 @@ class _PostCard extends StatelessWidget {
         child: InkWell(
           onTap: onOpen,
           splashColor: PawlyColors.burntOrange.withOpacity(0.08),
-          highlightColor: PawlyColors.burntOrange.withOpacity(0.04),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Stack(
-                children: [
-                  AspectRatio(
-                    aspectRatio: 1.7,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Container(
-                          color: PawlyColors.creamDeep,
-                          alignment: Alignment.center,
-                          child: const Icon(Icons.pets_rounded, color: PawlyColors.muted, size: 32),
+              if (imageUrl != null && imageUrl.isNotEmpty)
+                AspectRatio(
+                  aspectRatio: 16 / 11,
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: PawlyColors.amber.withOpacity(0.3),
+                      child: const Center(
+                        child: Icon(
+                          Icons.pets,
+                          color: PawlyColors.burntOrange,
+                          size: 40,
                         ),
-                        Image.network(
-                          (imageUrl == null || imageUrl.isEmpty) ? _fallbackImage : imageUrl,
-                          fit: BoxFit.cover,
-                          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                            if (wasSynchronouslyLoaded) return child;
-                            return AnimatedOpacity(
-                              opacity: frame == null ? 0 : 1,
-                              duration: const Duration(milliseconds: 450),
-                              curve: Curves.easeOut,
-                              child: child,
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: PawlyColors.creamDeep,
-                            alignment: Alignment.center,
-                            child: const Icon(Icons.broken_image_outlined, color: PawlyColors.muted, size: 36),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                  if (type.isNotEmpty)
-                    Positioned(top: 14, left: 14, child: _TypePill(type: type)),
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: _HeartButton(
-                      isFavorite: isFavorite,
-                      onTap: onFavorite,
-                    ),
-                  ),
-                ],
-              ),
+                ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                padding: const EdgeInsets.all(16),
+                child: Row(
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            (name == null || name.isEmpty) ? 'Unknown' : name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: PawlyText.serif(size: 24),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name != null && name.isNotEmpty
+                                ? name
+                                : 'Unnamed Pet',
+                            style: PawlyText.serif(size: 18),
                           ),
-                        ),
-                        if (subtitle.isNotEmpty) ...[
-                          const SizedBox(width: 12),
-                          Flexible(
-                            child: Text(
+                          if (subtitle.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
                               subtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.end,
                               style: PawlyText.sans(
                                 size: 13,
-                                weight: FontWeight.w600,
                                 color: PawlyColors.muted,
                               ),
                             ),
-                          ),
+                          ],
+                          if (location.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.location_on_outlined,
+                                  size: 14,
+                                  color: PawlyColors.burntOrange,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    location,
+                                    style: PawlyText.sans(
+                                      size: 12,
+                                      color: PawlyColors.muted,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_rounded, size: 16, color: PawlyColors.burntOrange),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                            location.isEmpty ? 'Location not shared' : location,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: PawlyText.sans(
-                              size: 13.5,
-                              weight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Material(
-                          color: PawlyColors.burntOrange.withOpacity(0.12),
-                          shape: const CircleBorder(),
-                          child: InkWell(
-                            customBorder: const CircleBorder(),
-                            onTap: onOpen,
-                            child: const Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Icon(Icons.north_east_rounded, size: 18, color: PawlyColors.burntOrange),
-                            ),
-                          ),
-                        ),
-                      ],
+                    IconButton(
+                      icon: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite
+                            ? PawlyColors.burntOrange
+                            : PawlyColors.muted,
+                      ),
+                      onPressed: onFavorite,
                     ),
                   ],
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TypePill extends StatelessWidget {
-  const _TypePill({required this.type});
-
-  final String type;
-
-  @override
-  Widget build(BuildContext context) {
-    final style = _TypeStyle.of(type);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(10, 6, 13, 6),
-      decoration: BoxDecoration(
-        color: style.background.withOpacity(0.94),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.7), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: style.foreground.withOpacity(0.28),
-            blurRadius: 16,
-            spreadRadius: 0.5,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.10),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(style.icon, size: 15, color: style.foreground),
-          const SizedBox(width: 5),
-          Text(
-            type,
-            style: PawlyText.sans(
-              size: 12.5,
-              weight: FontWeight.w800,
-              color: style.foreground,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeartButton extends StatefulWidget {
-  const _HeartButton({required this.isFavorite, required this.onTap});
-
-  final bool isFavorite;
-  final VoidCallback onTap;
-
-  @override
-  State<_HeartButton> createState() => _HeartButtonState();
-}
-
-class _HeartButtonState extends State<_HeartButton> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 650),
-  );
-
-  late final Animation<double> _scale = TweenSequence<double>([
-    TweenSequenceItem(
-      tween: Tween(begin: 1.0, end: 0.7).chain(CurveTween(curve: Curves.easeIn)),
-      weight: 16,
-    ),
-    TweenSequenceItem(
-      tween: Tween(begin: 0.7, end: 1.0).chain(CurveTween(curve: Curves.elasticOut)),
-      weight: 84,
-    ),
-  ]).animate(_controller);
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _handleTap() {
-    widget.onTap();
-    _controller.forward(from: 0);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _handleTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          final t = Curves.easeOut.transform(_controller.value);
-          final showRing = widget.isFavorite && _controller.value > 0 && _controller.value < 1;
-
-          return SizedBox(
-            width: 40,
-            height: 40,
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                if (showRing)
-                  Transform.scale(
-                    scale: 1 + t * 0.9,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFE5484D).withOpacity((1 - t) * 0.55),
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-                Transform.scale(scale: _scale.value, child: child),
-              ],
-            ),
-          );
-        },
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Icon(
-            widget.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-            size: 21,
-            color: widget.isFavorite ? const Color(0xFFE5484D) : PawlyColors.espresso,
           ),
         ),
       ),
@@ -958,68 +759,36 @@ class _StatusMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 84,
-            height: 84,
-            decoration: BoxDecoration(
-              color: PawlyColors.surface,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: PawlyColors.burntOrange.withOpacity(0.15),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Icon(icon, size: 40, color: PawlyColors.burntOrange),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: PawlyText.serif(size: 20),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: PawlyText.sans(
-              size: 15,
-              weight: FontWeight.w500,
-              color: PawlyColors.muted,
-            ).copyWith(height: 1.4),
-          ),
-          if (detail != null) ...[
-            const SizedBox(height: 12),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 64, color: PawlyColors.burntOrange),
+            const SizedBox(height: 16),
             Text(
-              detail!,
+              title,
+              style: PawlyText.serif(size: 20),
               textAlign: TextAlign.center,
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-              style: PawlyText.sans(
-                size: 11,
-                weight: FontWeight.w500,
-                color: PawlyColors.muted.withOpacity(0.7),
-              ),
             ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: PawlyText.sans(size: 14, color: PawlyColors.muted),
+            ),
+            if (detail != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                detail!,
+                textAlign: TextAlign.center,
+                style: PawlyText.sans(size: 12, color: Colors.red.shade400),
+              ),
+            ],
           ],
-        ],
-      )
-          .animate()
-          .fadeIn(duration: 400.ms, curve: Curves.easeOut)
-          .slideY(
-            begin: 0.1,
-            end: 0,
-            duration: 600.ms,
-            curve: Curves.easeOutBack,
-          ),
+        ),
+      ),
     );
   }
 }
@@ -1038,13 +807,33 @@ class _PlaceholderTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: _StatusMessage(icon: icon, title: title, message: message),
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 64, color: PawlyColors.burntOrange),
+            const SizedBox(height: 16),
+            Text(title, style: PawlyText.serif(size: 22)),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: PawlyText.sans(size: 14, color: PawlyColors.muted),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
 class PawlyBottomNav extends StatelessWidget {
-  const PawlyBottomNav({required this.currentIndex, required this.onTap});
+  const PawlyBottomNav({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -1055,120 +844,60 @@ class PawlyBottomNav extends StatelessWidget {
       decoration: BoxDecoration(
         color: PawlyColors.navBar,
         border: Border(
-          top: BorderSide(color: Colors.white.withOpacity(0.6), width: 1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: PawlyColors.espresso.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
+          top: BorderSide(
+            color: PawlyColors.burntOrange.withOpacity(0.15),
+            width: 1,
           ),
-        ],
+        ),
       ),
       child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+        child: SizedBox(
+          height: 68,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Expanded(
-                child: NavItem(
-                  icon: Icons.home_outlined,
-                  activeIcon: Icons.home_rounded,
-                  label: 'Home',
-                  active: currentIndex == 0,
-                  onTap: () => onTap(0),
-                ),
-              ),
-              Expanded(
-                child: NavItem(
-                  icon: Icons.add_circle_outline_rounded,
-                  activeIcon: Icons.add_circle_rounded,
-                  label: 'Post',
-                  active: currentIndex == 1,
-                  onTap: () => onTap(1),
-                ),
-              ),
-              Expanded(
-                child: NavItem(
-                  icon: Icons.favorite_border_rounded,
-                  activeIcon: Icons.favorite_rounded,
-                  label: 'Saved',
-                  active: currentIndex == 2,
-                  onTap: () => onTap(2),
-                ),
-              ),
-              Expanded(
-                child: NavItem(
-                  icon: Icons.person_outline_rounded,
-                  activeIcon: Icons.person_rounded,
-                  label: 'Profile',
-                  active: currentIndex == 3,
-                  onTap: () => onTap(3),
-                ),
-              ),
+              _navItem(0, Icons.home_rounded, 'Home'),
+              _navItem(1, Icons.add_circle_outline_rounded, 'Post'),
+              _navItem(2, Icons.map_rounded, 'Map'), // Map Tab (Index 2)
+              _navItem(3, Icons.favorite_rounded, 'Saved'),
+              _navItem(
+                4,
+                Icons.person_rounded,
+                'Profile',
+              ), // Profile Tab (Index 4)
             ],
           ),
         ),
       ),
     );
   }
-}
 
-class NavItem extends StatelessWidget {
-  const NavItem({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
+  Widget _navItem(int index, IconData icon, String label) {
+    final selected = currentIndex == index;
+    final color = selected
+        ? PawlyColors.burntOrange
+        : PawlyColors.espresso.withOpacity(0.6);
 
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 280),
-            curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: active ? PawlyColors.navPill : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: AnimatedScale(
-              scale: active ? 1.12 : 1.0,
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeOutBack,
-              child: Icon(
-                active ? activeIcon : icon,
-                size: 24,
-                color: active ? PawlyColors.burntOrange : PawlyColors.espresso,
+    return InkWell(
+      onTap: () => onTap(index),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: PawlyText.sans(
+                size: 11,
+                weight: selected ? FontWeight.w800 : FontWeight.w600,
+                color: color,
               ),
             ),
-          ),
-          const SizedBox(height: 3),
-          AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 250),
-            style: PawlyText.sans(
-              size: 12,
-              weight: active ? FontWeight.w800 : FontWeight.w600,
-              color: active ? PawlyColors.espresso : PawlyColors.muted,
-            ),
-            child: Text(label),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
