@@ -122,14 +122,30 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     setState(() => _tabIndex = 2);
   }
 
-  void _onNavTap(int index) {
-    if (index == 1) {
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => const CreatePostScreen()));
-      return;
-    }
-    setState(() => _tabIndex = index);
+ 
+void _onNavTap(int index) {
+  if (index == 1) {
+    Navigator.of(context)
+        .push<int>(
+          MaterialPageRoute<int>(
+            builder: (_) => const CreatePostScreen(),
+          ),
+        )
+        .then((selectedIndex) {
+          if (!mounted || selectedIndex == null) return;
+
+          setState(() {
+            _tabIndex = selectedIndex;
+          });
+        });
+    return;
   }
+
+  setState(() {
+    _tabIndex = index;
+  });
+}
+
 
   void _openPost(String id, Map<String, dynamic> data) {}
 
@@ -310,21 +326,41 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                   letterSpacing: 0.4,
                 ),
               ),
-              const Spacer(),
-              const Icon(
-                Icons.account_circle_rounded,
-                size: 18,
-                color: PawlyColors.burntOrange,
-              ),
-              const SizedBox(width: 6),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 130),
-                child: Text(
-                  displayName,
-                  overflow: TextOverflow.ellipsis,
-                  style: PawlyText.sans(size: 14, weight: FontWeight.w700),
-                ),
-              ),
+             
+const Spacer(),
+InkWell(
+  borderRadius: BorderRadius.circular(12),
+  onTap: () => _onNavTap(4),
+  child: Padding(
+    padding: const EdgeInsets.symmetric(
+      horizontal: 4,
+      vertical: 8,
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(
+          Icons.account_circle_rounded,
+          size: 18,
+          color: PawlyColors.burntOrange,
+        ),
+        const SizedBox(width: 6),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 130),
+          child: Text(
+            displayName,
+            overflow: TextOverflow.ellipsis,
+            style: PawlyText.sans(
+              size: 14,
+              weight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+
               const SizedBox(width: 10),
               _buildBell(),
             ],
