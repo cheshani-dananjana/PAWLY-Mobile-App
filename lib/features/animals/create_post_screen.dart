@@ -234,14 +234,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: PawlyBottomNav(
-        currentIndex: 1, // Highlights the 'Post' tab
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pop(context); // Takes you back to Home when Home is tapped
-          }
-        },
-      ),
+      
+bottomNavigationBar: PawlyBottomNav(
+  currentIndex: 1,
+  onTap: (index) {
+    if (index != 1) {
+      Navigator.pop(context, index);
+    }
+  },
+),
+
     );
   }
 
