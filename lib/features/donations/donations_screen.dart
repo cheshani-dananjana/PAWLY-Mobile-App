@@ -1,5 +1,6 @@
-
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../animals/create_post_screen.dart';
 
 class DonationScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class _DonationScreenState extends State<DonationScreen> {
 
   int? _selectedAmount;
   bool _isCustomAmount = false;
+  bool _isSaving = false;
 
   final List<int> _amounts = [500, 1000, 2000, 5000];
 
@@ -38,28 +40,64 @@ class _DonationScreenState extends State<DonationScreen> {
     });
   }
 
-  void _donate() {
-    final amount = _isCustomAmount
-        ? int.tryParse(_amountController.text.trim())
-        : _selectedAmount;
+ Future<void> _donate() async {
+  final amount = _isCustomAmount
+      ? int.tryParse(_amountController.text.trim())
+      : _selectedAmount;
 
-    if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a valid donation amount'),
-        ),
-      );
-      return;
-    }
-
+  if (amount == null || amount <= 0) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Selected donation: Rs. $amount'),
+      const SnackBar(
+        content: Text('Please select a valid donation amount'),
       ),
     );
-
-    // Payment gateway integration will be added later.
+    return;
   }
+
+  final user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Please log in before donating'),
+      ),
+    );
+    return;
+  }
+
+  setState(() => _isSaving = true);
+
+  try {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('donations')
+        .add({
+      'amount': amount,
+      'currency': 'LKR',
+      'status': 'pending',
+      'created_at': FieldValue.serverTimestamp(),
+    });
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Donation record saved successfully!'),
+      ),
+    );
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to save donation: $e')),
+    );
+  } finally {
+    if (mounted) {
+      setState(() => _isSaving = false);
+    }
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -192,9 +230,18 @@ class _DonationScreenState extends State<DonationScreen> {
               const SizedBox(height: 30),
 
               ElevatedButton.icon(
-                onPressed: _donate,
-                icon: const Icon(Icons.favorite_rounded),
-                label: const Text('Continue to Donate'),
+  onPressed: _isSaving ? null : _donate,
+  icon: _isSaving
+      ? const SizedBox(
+          height: 18,
+          width: 18,
+          child: CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 2,
+          ),
+        )
+      : const Icon(Icons.favorite_rounded),
+  label: Text(_isSaving ? 'Saving...' : 'Continue to Donate'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: PawlyColors.burntOrange,
                   foregroundColor: Colors.white,
