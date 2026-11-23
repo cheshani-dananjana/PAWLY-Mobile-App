@@ -1,3 +1,5 @@
+import '../donations/donations_screen.dart';
+import '../notifications/notifications_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -317,7 +319,22 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 ),
               ),
               const SizedBox(width: 10),
-              _buildBell(),
+              IconButton(
+  tooltip: 'Make a Donation',
+  onPressed: () {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const DonationScreen(),
+      ),
+    );
+  },
+  icon: const Icon(
+    Icons.volunteer_activism_rounded,
+    color: PawlyColors.burntOrange,
+    size: 25,
+  ),
+),
+_buildBell(),
             ],
           ),
           const SizedBox(height: 22),
@@ -340,40 +357,71 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     );
   }
 
-  Widget _buildBell() {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Material(
-          color: PawlyColors.surface,
-          shape: const CircleBorder(),
-          elevation: 1.5,
-          shadowColor: PawlyColors.burntOrange.withOpacity(0.25),
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: () {},
-            child: const Padding(
-              padding: EdgeInsets.all(10),
-              child: Icon(Icons.notifications_none_rounded, color: PawlyColors.espresso, size: 22),
+ Widget _buildBell() {
+  final user = FirebaseAuth.instance.currentUser;
+
+  return StreamBuilder<QuerySnapshot>(
+    stream: user == null
+        ? null
+        : FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('notifications')
+            .where('isRead', isEqualTo: false)
+            .snapshots(),
+    builder: (context, snapshot) {
+      final hasUnread =
+          snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Material(
+            color: PawlyColors.surface,
+            shape: const CircleBorder(),
+            elevation: 1.5,
+            shadowColor: PawlyColors.burntOrange.withOpacity(0.25),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationsScreen(),
+                  ),
+                );
+              },
+              child: const Padding(
+                padding: EdgeInsets.all(10),
+                child: Icon(
+                  Icons.notifications_none_rounded,
+                  color: PawlyColors.espresso,
+                  size: 22,
+                ),
+              ),
             ),
           ),
-        ),
-        Positioned(
-          right: 9,
-          top: 9,
-          child: Container(
-            width: 9,
-            height: 9,
-            decoration: BoxDecoration(
-              color: PawlyColors.burntOrange,
-              shape: BoxShape.circle,
-              border: Border.all(color: PawlyColors.surface, width: 1.5),
+          if (hasUnread)
+            Positioned(
+              right: 9,
+              top: 9,
+              child: Container(
+                width: 9,
+                height: 9,
+                decoration: BoxDecoration(
+                  color: PawlyColors.burntOrange,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: PawlyColors.surface,
+                    width: 1.5,
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
-    );
-  }
+        ],
+      );
+    },
+  );
+}
 
   Widget _buildSearchBar() {
     return Container(

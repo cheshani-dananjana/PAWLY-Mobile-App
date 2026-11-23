@@ -68,22 +68,47 @@ class _DonationScreenState extends State<DonationScreen> {
   setState(() => _isSaving = true);
 
   try {
-    await FirebaseFirestore.instance
+    final firestore = FirebaseFirestore.instance;
+
+    // Donation document
+    final donationRef = firestore
         .collection('users')
         .doc(user.uid)
         .collection('donations')
-        .add({
+        .doc();
+
+    // Notification document
+    final notificationRef = firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('notifications')
+        .doc();
+
+    // Save both records together
+    final batch = firestore.batch();
+
+    batch.set(donationRef, {
       'amount': amount,
       'currency': 'LKR',
       'status': 'pending',
       'created_at': FieldValue.serverTimestamp(),
     });
 
+    batch.set(notificationRef, {
+      'title': 'Donation Submitted',
+      'message':
+          'Your donation of Rs. $amount has been recorded successfully. Thank you for supporting Pawly!',
+      'isRead': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Donation record saved successfully!'),
+        content: Text('Donation and notification saved successfully!'),
       ),
     );
   } catch (e) {
@@ -98,7 +123,6 @@ class _DonationScreenState extends State<DonationScreen> {
     }
   }
 }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

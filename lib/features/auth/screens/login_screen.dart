@@ -1,3 +1,4 @@
+import '../../home/home_feed_screen.dart';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -164,35 +165,43 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // LOGIN FUNCTION
-  Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) return;
+ // LOGIN FUNCTION
+Future<void> _login() async {
+  if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      final String? error = await _authService.login(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
+  try {
+    final String? error = await _authService.login(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
+    );
+
+    if (!mounted) return;
+
+    setState(() => _isLoading = false);
+
+    if (error != null) {
+      _showMessage(error, isError: true);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomeFeedScreen(),
+        ),
       );
-
-      if (!mounted) return;
-
-      setState(() => _isLoading = false);
-
-      if (error != null) {
-        _showMessage(error, isError: true);
-      } else {
-        _showMessage("Welcome back! Login successful 🐾");
-      }
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() => _isLoading = false);
-
-      _showMessage("Something went wrong. Please try again.", isError: true);
     }
+  } catch (e) {
+    if (!mounted) return;
+
+    setState(() => _isLoading = false);
+
+    _showMessage(
+      "Something went wrong. Please try again.",
+      isError: true,
+    );
   }
+}
 
   // FORGOT PASSWORD
   void _forgotPassword() {
