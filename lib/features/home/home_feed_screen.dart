@@ -620,7 +620,8 @@ class _FilterChipButtonState extends State<_FilterChipButton> {
   }
 }
 
-class _PostCard extends StatelessWidget {
+
+class _PostCard extends StatefulWidget {
   const _PostCard({
     required this.data,
     required this.isFavorite,
@@ -633,145 +634,248 @@ class _PostCard extends StatelessWidget {
   final VoidCallback onFavorite;
   final VoidCallback onOpen;
 
+  @override
+  State<_PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<_PostCard> {
+  int _heartBurst = 0;
+
+  // Double-tap to like and play the heart animation.
+  void _onDoubleTap() {
+    // If already liked, do not unlike it.
+    if (!widget.isFavorite) {
+      widget.onFavorite();
+    }
+
+    // Trigger the animation every time.
+    setState(() {
+      _heartBurst++;
+    });
+  }
+
   String? _ageLabel(dynamic age) {
     if (age == null) return null;
+
     if (age is num) {
-      final n = age % 1 == 0 ? age.toInt().toString() : age.toString();
+      final n = age % 1 == 0
+          ? age.toInt().toString()
+          : age.toString();
+
       return '$n${age == 1 ? 'year' : 'years'}';
     }
+
     final s = age.toString().trim();
     return s.isEmpty ? null : s;
   }
 
   String? _distanceLabel(dynamic distance) {
     if (distance == null) return null;
-    if (distance is num) return '${distance.toStringAsFixed(1)} mi';
+
+    if (distance is num) {
+      return '${distance.toStringAsFixed(1)} mi';
+    }
+
     final s = distance.toString().trim();
     return s.isEmpty ? null : s;
   }
 
   @override
   Widget build(BuildContext context) {
-    final name = (data['animalName'] as String?)?.trim();
-    final imageUrl = (data['imageUrl'] as String?)?.trim();
+    final name =
+        (widget.data['animalName'] as String?)?.trim();
+
+    final imageUrl =
+        (widget.data['imageUrl'] as String?)?.trim();
 
     final subtitle = [
-      _ageLabel(data['age']),
-      (data['breed'] as String?)?.trim(),
-    ].whereType<String>().where((e) => e.isNotEmpty).join(' · ');
+      _ageLabel(widget.data['age']),
+      (widget.data['breed'] as String?)?.trim(),
+    ]
+        .whereType<String>()
+        .where((e) => e.isNotEmpty)
+        .join(' · ');
 
     final location = [
-      (data['location'] as String?)?.trim(),
-      _distanceLabel(data['distance']),
-    ].whereType<String>().where((e) => e.isNotEmpty).join(' · ');
+      (widget.data['location'] as String?)?.trim(),
+      _distanceLabel(widget.data['distance']),
+    ]
+        .whereType<String>()
+        .where((e) => e.isNotEmpty)
+        .join(' · ');
 
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: PawlyColors.espresso.withOpacity(0.06),
+            color: PawlyColors.espresso.withValues(alpha: 0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
           BoxShadow(
-            color: PawlyColors.burntOrange.withOpacity(0.12),
+            color: PawlyColors.burntOrange.withValues(alpha: 0.12),
             blurRadius: 30,
             spreadRadius: -6,
             offset: const Offset(0, 16),
           ),
         ],
       ),
+
       child: Material(
         color: PawlyColors.surface,
         borderRadius: BorderRadius.circular(28),
         clipBehavior: Clip.antiAlias,
+
         child: InkWell(
-          onTap: onOpen,
-          splashColor: PawlyColors.burntOrange.withOpacity(0.08),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          onTap: widget.onOpen,
+          onDoubleTap: _onDoubleTap,
+
+          splashColor:
+              PawlyColors.burntOrange.withValues(alpha: 0.08),
+
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              if (imageUrl != null && imageUrl.isNotEmpty)
-                AspectRatio(
-                  aspectRatio: 16 / 11,
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: PawlyColors.amber.withOpacity(0.3),
-                      child: const Center(
-                        child: Icon(
-                          Icons.pets,
-                          color: PawlyColors.burntOrange,
-                          size: 40,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name != null && name.isNotEmpty
-                                ? name
-                                : 'Unnamed Pet',
-                            style: PawlyText.serif(size: 18),
-                          ),
-                          if (subtitle.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              subtitle,
-                              style: PawlyText.sans(
-                                size: 13,
-                                color: PawlyColors.muted,
+
+              // ORIGINAL PET CARD CONTENT
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+
+                  // Pet image
+                  if (imageUrl != null && imageUrl.isNotEmpty)
+                    AspectRatio(
+                      aspectRatio: 16 / 11,
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) {
+                          return Container(
+                            color: PawlyColors.amber.withValues(
+                              alpha: 0.3,
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.pets,
+                                color: PawlyColors.burntOrange,
+                                size: 40,
                               ),
                             ),
-                          ],
-                          if (location.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.location_on_outlined,
-                                  size: 14,
-                                  color: PawlyColors.burntOrange,
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    location,
-                                    style: PawlyText.sans(
-                                      size: 12,
-                                      color: PawlyColors.muted,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                          );
+                        },
+                      ),
+                    ),
+
+                  // Pet information
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name != null && name.isNotEmpty
+                                    ? name
+                                    : 'Unnamed Pet',
+                                style: PawlyText.serif(size: 18),
+                              ),
+
+                              if (subtitle.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  subtitle,
+                                  style: PawlyText.sans(
+                                    size: 13,
+                                    color: PawlyColors.muted,
                                   ),
                                 ),
                               ],
-                            ),
-                          ],
-                        ],
-                      ),
+
+                              if (location.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.location_on_outlined,
+                                      size: 14,
+                                      color: PawlyColors.burntOrange,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        location,
+                                        style: PawlyText.sans(
+                                          size: 12,
+                                          color: PawlyColors.muted,
+                                        ),
+                                        overflow:
+                                            TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+
+                        // Small favorite button
+                        IconButton(
+                          icon: Icon(
+                            widget.isFavorite
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: widget.isFavorite
+                                ? PawlyColors.burntOrange
+                                : PawlyColors.muted,
+                          ),
+                          onPressed: widget.onFavorite,
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      icon: Icon(
-                        isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorite
-                            ? PawlyColors.burntOrange
-                            : PawlyColors.muted,
-                      ),
-                      onPressed: onFavorite,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+
+              // BIG HEART POP-UP ANIMATION
+              if (_heartBurst > 0)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Center(
+                      child: const Icon(
+                        Icons.favorite_rounded,
+                        color: PawlyColors.burntOrange,
+                        size: 112,
+                        shadows: [
+                          Shadow(
+                            color: Color(0x77000000),
+                            blurRadius: 22,
+                          ),
+                        ],
+                      )
+                          .animate(
+                            key: ValueKey(_heartBurst),
+                          )
+                          .fadeIn(
+                            duration: 120.ms,
+                          )
+                          .scale(
+                            begin: const Offset(0.35, 0.35),
+                            end: const Offset(1.15, 1.15),
+                            duration: 360.ms,
+                            curve: Curves.easeOutBack,
+                          )
+                          .fadeOut(
+                            delay: 420.ms,
+                            duration: 300.ms,
+                          ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -779,6 +883,7 @@ class _PostCard extends StatelessWidget {
     );
   }
 }
+
 
 class _StatusMessage extends StatelessWidget {
   const _StatusMessage({
