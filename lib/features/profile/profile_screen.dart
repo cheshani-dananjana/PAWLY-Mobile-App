@@ -1,7 +1,8 @@
-import '../auth/screens/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+
+import 'package:pawly/features/auth/screens/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -474,30 +475,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      
-onPressed: () async {
-  try {
-    await FirebaseAuth.instance.signOut();
+                      onPressed: () async {
+                        try {
+                          await FirebaseAuth.instance.signOut();
+                        } on FirebaseAuthException {
+                          if (!mounted) return;
 
-    if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Could not log out. Please try again.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (_) => const LoginScreen(),
-      ),
-      (route) => false,
-    );
-  } catch (e) {
-    if (!context.mounted) return;
+                        if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Logout failed. Please try again.'),
-      ),
-    );
-  }
-},
-
+                        Navigator.of(
+                          context,
+                          rootNavigator: true,
+                        ).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (_) => const LoginScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red.shade50,
                         foregroundColor: Colors.red.shade700,
