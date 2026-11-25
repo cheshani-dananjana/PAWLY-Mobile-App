@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../animals/create_post_screen.dart';
 import '../map/map_screen.dart';
 import '../profile/profile_screen.dart';
+import '../animals/animal_details_screen.dart';
 
 // =============================================================================
 // DESIGN TOKENS
@@ -299,7 +300,13 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     });
   }
 
-  void _openPost(String id, Map<String, dynamic> data) {}
+  void _openPost(String id, Map<String, dynamic> data) {
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => AnimalDetailsScreen(postId: id),
+    ),
+  );
+}
 
   bool _matchesSearch(Map<String, dynamic> data) {
     final q = _searchQuery.trim().toLowerCase();
@@ -399,7 +406,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
               sliver: SliverList.separated(
                 itemCount: docs.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 18),
+                separatorBuilder: (_, _) => const SizedBox(height: 18),
                 itemBuilder: (context, index) {
                   final doc = docs[index];
                   final data = doc.data() as Map<String, dynamic>;
@@ -500,7 +507,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
           sliver: SliverList.separated(
             itemCount: _savedPostIds.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 18),
+            separatorBuilder: (_, _) => const SizedBox(height: 18),
             itemBuilder: (context, index) {
               final id = _savedPostIds[index];
               // Read the original post, so its name/image/location stay current.
@@ -753,7 +760,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 18),
         itemCount: _filters.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final option = _filters[i];
           return Center(
@@ -1173,7 +1180,7 @@ class _PostCardState extends State<_PostCard> {
                           );
                         },
                         // On error the placeholder behind stays visible.
-                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
                       ),
 
                     // 2. Soft bottom scrim so the info strip separates

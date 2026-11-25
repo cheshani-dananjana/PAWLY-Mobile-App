@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../adoption/my_applications_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+
 
 import 'package:pawly/features/auth/screens/login_screen.dart';
 
@@ -209,7 +211,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   'Receive alerts when new animals are posted nearby',
                 ),
                 value: _pushNotifications,
-                activeColor: const Color(0xFFBF5700),
+                activeThumbColor: const Color(0xFFBF5700),
                 onChanged: (val) {
                   setModalState(() => _pushNotifications = val);
                   setState(() => _pushNotifications = val);
@@ -224,7 +226,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   'Receive weekly digest of adopted and stray pets',
                 ),
                 value: _emailAlerts,
-                activeColor: const Color(0xFFBF5700),
+                activeThumbColor: const Color(0xFFBF5700),
                 onChanged: (val) {
                   setModalState(() => _emailAlerts = val);
                   setState(() => _emailAlerts = val);
@@ -311,7 +313,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Icon(
                 Icons.pets,
                 size: 36,
-                color: const Color(0xFFBF5700).withOpacity(0.14),
+                color: const Color(0xFFBF5700).withValues(alpha: 0.14),
               ),
             ),
           ),
@@ -323,7 +325,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Icon(
                 Icons.pets,
                 size: 28,
-                color: const Color(0xFFBF5700).withOpacity(0.12),
+                color: const Color(0xFFBF5700).withValues(alpha: 0.12),
               ),
             ),
           ),
@@ -335,7 +337,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Icon(
                 Icons.pets,
                 size: 42,
-                color: const Color(0xFFBF5700).withOpacity(0.15),
+                color: const Color(0xFFBF5700).withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -347,7 +349,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Icon(
                 Icons.pets,
                 size: 32,
-                color: const Color(0xFFBF5700).withOpacity(0.13),
+                color: const Color(0xFFBF5700).withValues(alpha: 0.13),
               ),
             ),
           ),
@@ -359,7 +361,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Icon(
                 Icons.pets,
                 size: 38,
-                color: const Color(0xFFBF5700).withOpacity(0.14),
+                color: const Color(0xFFBF5700).withValues(alpha: 0.14),
               ),
             ),
           ),
@@ -371,7 +373,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Icon(
                 Icons.pets,
                 size: 45,
-                color: const Color(0xFFBF5700).withOpacity(0.15),
+                color: const Color(0xFFBF5700).withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -383,7 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Icon(
                 Icons.pets,
                 size: 34,
-                color: const Color(0xFFBF5700).withOpacity(0.13),
+                color: const Color(0xFFBF5700).withValues(alpha: 0.13),
               ),
             ),
           ),
@@ -457,6 +459,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     subtitle: 'View your favorite rescued pets',
                     onTap: _openSavedAnimals,
                   ),
+
+_buildProfileCard(
+  icon: Icons.assignment_outlined,
+  title: 'My Applications',
+  subtitle: 'Track your adoption and foster requests',
+  onTap: () {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const MyApplicationsScreen(),
+      ),
+    );
+  },
+),
+
                   _buildProfileCard(
                     icon: Icons.notifications_active_outlined,
                     title: 'Notifications',
@@ -544,7 +560,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFBF5700).withOpacity(0.08),
+            color: const Color(0xFFBF5700).withValues(alpha: 0.08),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
