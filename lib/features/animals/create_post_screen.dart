@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../home/home_feed_screen.dart';
+import '../../core/services/cloudinary_upload_service.dart';
 
 /// PAWLY global theme colors
 class PawlyColors {
@@ -134,16 +134,28 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     setState(() => _isPublishing = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
 
+final user = FirebaseAuth.instance.currentUser;
 
-      // ✅ ADDED: Temporary bypass URL to unblock the team
-      final String downloadUrl = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1';
+// Only authenticated users can publish posts.
+if (user == null) {
+  _showSnack('Please log in before publishing an animal post.');
+  return;
+}
+
+// Upload the selected animal photograph to Cloudinary.
+final imageFile = _selectedImage!;
+
+final String downloadUrl =
+    await CloudinaryUploadService.uploadAnimalImage(imageFile);
+
+if (!mounted) return;
+
 
       // 2. Save post document to Cloud Firestore 'posts' collection
       await FirebaseFirestore.instance.collection('posts').add({
-        'userId': user?.uid ?? 'anonymous',
-        'userEmail': user?.email ?? 'anonymous@pawly.com',
+        'userId': user.uid,
+'userEmail': user.email ?? '',
         'postType': _postType, // 'Stray', 'Lost', or 'Adoption'
         'animalName': _nameController.text.trim(),
         'location': _locationController.text.trim(),
