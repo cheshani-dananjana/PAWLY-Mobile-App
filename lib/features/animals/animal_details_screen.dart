@@ -1,3 +1,4 @@
+import '../reporting/report_post_screen.dart';
 import '../donations/donations_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -245,12 +246,48 @@ if (type.toLowerCase() == 'adoption')
                       padding: const EdgeInsets.symmetric(
                         vertical: 16,
                       ),
+                    
                     ),
                   ),
                 ),
+
+              // Report Post button
+              const SizedBox(height: 12),
+
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ReportPostScreen(
+                          postId: postId,
+                          animalName: name,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.flag_outlined),
+                  label: const Text('Report Post'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF9B3D28),
+                    side: const BorderSide(
+                      color: Color(0xFF9B3D28),
+                      width: 1.5,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         );
+
       },
     );
   }
