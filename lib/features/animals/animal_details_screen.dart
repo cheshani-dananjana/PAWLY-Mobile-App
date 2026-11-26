@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../adoption/apply_adoption_screen.dart';
+import '../tendering/tender_care_screen.dart';
 
 class AnimalDetailsScreen extends StatelessWidget {
   const AnimalDetailsScreen({
@@ -159,7 +160,35 @@ class AnimalDetailsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
 
-              if (type.toLowerCase() == 'adoption')
+              
+SizedBox(
+  width: double.infinity,
+  child: ElevatedButton.icon(
+    onPressed: () {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => TenderCareScreen(
+            postId: postId,
+            animalName: name,
+          ),
+        ),
+      );
+    },
+    icon: const Icon(Icons.volunteer_activism_rounded),
+    label: const Text('Provide Care'),
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFFBF5700),
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+  ),
+),
+
+const SizedBox(height: 12),
+if (type.toLowerCase() == 'adoption')
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
