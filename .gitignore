@@ -117,3 +117,12 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+# Security testing dependencies
+node_modules/
+
+# Firebase emulator files
+firebase-debug*.log
+firestore-debug*.log
+ui-debug*.log
+.firebase/
+firebase-export-*/

@@ -8,7 +8,6 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Get Current Logged-in User
   User? get currentUser => _auth.currentUser;
 
   // Sign Up
@@ -39,6 +38,7 @@ class AuthService {
           .doc(credential.user!.uid)
           .set(newUser.toMap());
 
+      await _auth.signOut();
       return null;
     } on FirebaseAuthException catch (e) {
       return _getAuthErrorMessage(e);
@@ -46,28 +46,45 @@ class AuthService {
       if (credential?.user != null) {
         try {
           await credential!.user!.delete();
-        } catch (_) {
-          // Account cleanup failed
-        }
+        } catch (_) {}
       }
 
       return 'Something went wrong: $e';
     }
   }
 
-  // Login
+  // Login and Account Validation
   Future<String?> login(String email, String password) async {
     try {
-      await _auth.signInWithEmailAndPassword(
+      final credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
 
+      final doc = await _firestore
+          .collection('users')
+          .doc(credential.user!.uid)
+          .get(const GetOptions(source: Source.server));
+
+      final data = doc.data();
+
+      if (data == null ||
+          data['account_status'] != 'active' ||
+          !['admin', 'user'].contains(data['role'])) {
+        await _auth.signOut();
+
+        return 'Account blocked or profile unavailable. '
+            'Contact support.';
+      }
+
       return null;
     } on FirebaseAuthException catch (e) {
+      await _auth.signOut();
       return _getAuthErrorMessage(e);
     } catch (e) {
-      return 'Login failed: $e';
+      await _auth.signOut();
+
+      return 'Unable to verify account. Please try again.';
     }
   }
 
@@ -75,6 +92,7 @@ class AuthService {
   Future<String?> sendPasswordResetEmail(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());
+
       return null;
     } on FirebaseAuthException catch (e) {
       return _getAuthErrorMessage(e);
@@ -83,7 +101,7 @@ class AuthService {
     }
   }
 
-  // Get User Profile
+  // Get User Profile from Firestore
   Future<UserModel?> getUserProfile() async {
     try {
       final user = _auth.currentUser;
@@ -133,7 +151,7 @@ class AuthService {
     await _auth.signOut();
   }
 
-  // Firebase Authentication Error Messages
+  // Authentication Error Messages
   String _getAuthErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'email-already-in-use':
@@ -143,7 +161,7 @@ class AuthService {
         return 'Please enter a valid email address.';
 
       case 'weak-password':
-        return 'Password is too weak. Please use a stronger password.';
+        return 'Password is too weak.';
 
       case 'user-not-found':
         return 'No account found with this email.';
@@ -159,7 +177,7 @@ class AuthService {
         return 'Too many attempts. Please try again later.';
 
       case 'network-request-failed':
-        return 'Network error. Please check your internet connection.';
+        return 'Please check your internet connection.';
 
       default:
         return e.message ?? 'Authentication failed. Please try again.';

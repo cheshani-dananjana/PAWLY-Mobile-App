@@ -25,8 +25,8 @@ class UserModel {
       fullName: map['full_name'] ?? '',
       email: map['email'] ?? '',
       phoneNumber: map['phone_number'] ?? '',
-      role: map['role'] ?? 'user',
-      accountStatus: map['account_status'] ?? 'active',
+      role: map['role'] ?? 'unknown',
+      accountStatus: map['account_status'] ?? 'unknown',
       createdAt: (map['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }

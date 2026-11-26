@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -121,9 +122,55 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   String _searchQuery = '';
   int _tabIndex = 0;
 
-  final Set<String> _favorites = {};
+  // Likes are a separate local reaction. Bookmarks persist in Firestore.
+  final Set<String> _likedPostIds = {};
+  List<String> _savedPostIds = [];
+  bool _savedLoading = true;
+  Object? _savedError;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _savedSubscription;
+  final Map<String, Stream<DocumentSnapshot<Map<String, dynamic>>>>
+  _savedPostStreams = {};
 
   late Stream<QuerySnapshot> _postsStream = _buildPostsStream();
+
+  CollectionReference<Map<String, dynamic>> _savedCollection(String uid) =>
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('savedPosts');
+
+  @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _savedLoading = false;
+      return;
+    }
+
+    // A real-time listener keeps the heart icons and Saved tab synchronized.
+    _savedSubscription = _savedCollection(user.uid)
+        .orderBy('savedAt', descending: true)
+        .snapshots()
+        .listen(
+          (snapshot) {
+            if (!mounted) return;
+            final ids = snapshot.docs.map((doc) => doc.id).toList();
+            setState(() {
+              _savedPostIds = ids;
+              _savedLoading = false;
+              _savedError = null;
+            });
+          },
+          onError: (Object error) {
+            if (!mounted) return;
+            setState(() {
+              _savedLoading = false;
+              _savedError = error;
+            });
+          },
+        );
+  }
 
   // Firestore query is intentionally unchanged (keeps your composite index).
   Stream<QuerySnapshot> _buildPostsStream() {
@@ -138,6 +185,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
 
   @override
   void dispose() {
+    _savedSubscription?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -150,10 +198,76 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     });
   }
 
-  void _toggleFavorite(String id) {
+  // Heart = LIKE only. It does not add the animal to Saved Paws.
+  void _toggleLike(String id) {
     setState(() {
-      if (!_favorites.remove(id)) _favorites.add(id);
+      if (!_likedPostIds.remove(id)) _likedPostIds.add(id);
     });
+  }
+
+  // Bookmark from Home = save this post, then open Saved Paws (tab 3).
+  Future<void> _savePost(String id) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to save an animal.')),
+      );
+      return;
+    }
+
+    final alreadySaved = _savedPostIds.contains(id);
+    setState(() {
+      if (!alreadySaved) {
+        _savedPostIds.insert(0, id);
+        _savedLoading = false;
+      }
+    });
+
+    if (alreadySaved) return;
+
+    try {
+      await _savedCollection(user.uid)
+          .doc(id)
+          .set({'savedAt': FieldValue.serverTimestamp()});
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _savedPostIds.remove(id));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not save this animal. Please try again.'),
+        ),
+      );
+    }
+  }
+
+  // On the Saved tab, tapping the bookmark removes this saved animal.
+  Future<void> _removeSavedPost(String id) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final previousIndex = _savedPostIds.indexOf(id);
+    setState(() => _savedPostIds.remove(id));
+
+    try {
+      await _savedCollection(user.uid).doc(id).delete();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        if (!_savedPostIds.contains(id)) {
+          final index = previousIndex < 0
+              ? _savedPostIds.length
+              : previousIndex > _savedPostIds.length
+              ? _savedPostIds.length
+              : previousIndex;
+          _savedPostIds.insert(index, id);
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not remove saved animal. Please try again.'),
+        ),
+      );
+    }
   }
 
   void _openMap() {
@@ -206,13 +320,11 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     } else if (_tabIndex == 2) {
       currentBody = MapScreen(); // Map Screen (Index 2)
     } else if (_tabIndex == 3) {
-      currentBody = const _PlaceholderTab(
-        icon: Icons.favorite_rounded,
-        title: 'Saved paws',
-        message: 'Animals you save will show up here.',
-      );
+      currentBody = _buildSavedTab();
     } else if (_tabIndex == 4) {
-      currentBody = ProfileScreen(); // Profile Screen (Index 4)
+      currentBody = ProfileScreen(
+        onOpenSaved: () => _onNavTap(3),
+      ); // Profile Screen (Index 4)
     } else {
       currentBody = _buildFeed();
     }
@@ -297,8 +409,10 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
 
                   final card = _PostCard(
                     data: data,
-                    isFavorite: _favorites.contains(doc.id),
-                    onFavorite: () => _toggleFavorite(doc.id),
+                    isLiked: _likedPostIds.contains(doc.id),
+                    onLike: () => _toggleLike(doc.id),
+                    isSaved: _savedPostIds.contains(doc.id),
+                    onSave: () => _savePost(doc.id),
                     onOpen: () => _openPost(doc.id, data),
                   );
 
@@ -328,6 +442,124 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   }
 
   // ---------------------------------------------------------------------------
+  // SAVED PAWS — bookmarked posts only, stored per signed-in Firebase user
+  // ---------------------------------------------------------------------------
+
+  Widget _buildSavedTab() {
+    if (FirebaseAuth.instance.currentUser == null) {
+      return const _StatusMessage(
+        icon: Icons.lock_outline_rounded,
+        title: 'Log in to save little paws',
+        message: 'Your saved animals will appear here after you sign in.',
+      );
+    }
+
+    if (_savedLoading) {
+      return const Center(child: _PawLoader());
+    }
+
+    if (_savedError != null) {
+      return _StatusMessage(
+        icon: Icons.cloud_off_rounded,
+        title: 'Couldn’t load saved paws',
+        message: 'Check your connection and Firestore permissions.',
+        detail: '$_savedError',
+      );
+    }
+
+    if (_savedPostIds.isEmpty) {
+      return const _StatusMessage(
+        icon: Icons.favorite_border_rounded,
+        title: 'No saved paws yet',
+        message: 'Tap the bookmark on an animal post to keep it here.',
+      );
+    }
+
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 26, 20, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Saved paws', style: PawlyText.serif(size: 29)),
+                const SizedBox(height: 5),
+                Text(
+                  '${_savedPostIds.length} little ${_savedPostIds.length == 1 ? 'paw' : 'paws'} you love',
+                  style: PawlyText.sans(
+                    size: 14,
+                    weight: FontWeight.w500,
+                    color: PawlyColors.muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+          sliver: SliverList.separated(
+            itemCount: _savedPostIds.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 18),
+            itemBuilder: (context, index) {
+              final id = _savedPostIds[index];
+              // Read the original post, so its name/image/location stay current.
+              return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                key: ValueKey('saved-post-$id'),
+                stream: _savedPostStreams.putIfAbsent(
+                  id,
+                  () => FirebaseFirestore.instance
+                      .collection('posts')
+                      .doc(id)
+                      .snapshots(),
+                ),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return _SavedPostNotice(
+                      message: 'Couldn’t load this post.',
+                      onRemove: () => _removeSavedPost(id),
+                    );
+                  }
+                  if (!snapshot.hasData) {
+                    return const SizedBox(
+                      height: 140,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: PawlyColors.burntOrange,
+                        ),
+                      ),
+                    );
+                  }
+                  final data = snapshot.data?.data();
+                  if (data == null) {
+                    return _SavedPostNotice(
+                      message: 'This post is no longer available.',
+                      onRemove: () => _removeSavedPost(id),
+                    );
+                  }
+
+                  return _PostCard(
+                    key: ValueKey('saved-card-$id'),
+                    data: data,
+                    isLiked: _likedPostIds.contains(id),
+                    onLike: () => _toggleLike(id),
+                    isSaved: true,
+                    onSave: () => _removeSavedPost(id),
+                    removeFromSaved: true,
+                    onOpen: () => _openPost(id, data),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
   // HEADER
   // ---------------------------------------------------------------------------
 
@@ -336,12 +568,14 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     final displayName =
         user?.displayName ?? user?.email?.split('@').first ?? 'Guest User';
 
-    // "Thulakshie Attanayake" -> "Thulakshie"
-    final trimmed = displayName.trim();
-    final firstWord = trimmed.isEmpty ? '' : trimmed.split(RegExp(r'\s+')).first;
-    final firstName = firstWord.isEmpty
-        ? 'friend'
-        : firstWord[0].toUpperCase() + firstWord.substring(1);
+    // Prefer a real Firebase display name. A long, unseparated email username
+    // is not necessarily a person's first name, so use a friendly fallback.
+    final profileName = user?.displayName?.trim() ?? '';
+    final nameParts = profileName.split(RegExp(r'[\s._-]+'));
+    final firstPart = nameParts.isEmpty ? '' : nameParts.first.trim();
+    final firstName = firstPart.isNotEmpty && firstPart.length <= 13
+        ? firstPart[0].toUpperCase() + firstPart.substring(1)
+        : 'there';
 
     final greeting = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,73 +587,70 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 'Hi, $firstName!',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: PawlyText.serif(size: 30, height: 1.1),
+                style: PawlyText.serif(size: 23, height: 1.15),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             const _WavingPaw(),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
         Text(
           'Ready to help a paw today?',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: PawlyText.sans(
-            size: 14.5,
+            size: 13,
             weight: FontWeight.w500,
-            color: PawlyColors.espresso.withValues(alpha: 0.66),
+            color: PawlyColors.espresso.withValues(alpha: 0.68),
           ),
         ),
       ],
     );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row: logo, username (opens Profile), notification bell
+          // Compact toolbar: brand, profile shortcut, notifications.
           Row(
             children: [
               const Icon(
                 Icons.pets_rounded,
                 color: PawlyColors.espresso,
-                size: 26,
+                size: 24,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 7),
               Text(
                 'PAWLY',
                 style: PawlyText.sans(
-                  size: 24,
+                  size: 22,
                   weight: FontWeight.w800,
-                  letterSpacing: 0.4,
+                  letterSpacing: 0.3,
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: _buildUsernameButton(displayName),
-                ),
-              ),
+              const Spacer(),
+              _buildUsernameButton(displayName),
               const SizedBox(width: 8),
               _buildBell(),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
 
-          // Greeting + puppy peeking over the search bar
+          // Compact personalized greeting, with the existing animations.
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(child: _entrance(context, greeting)),
-              const SizedBox(width: 8),
+              const SizedBox(width: 2),
               Transform.translate(
-                offset: const Offset(0, 9),
+                offset: const Offset(0, 7),
                 child: const _PuppyPeek(),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           _PawlySearchField(
             controller: _searchController,
             query: _searchQuery,
@@ -448,34 +679,25 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   }
 
   Widget _buildUsernameButton(String displayName) {
-    return Material(
-      color: PawlyColors.ivory.withValues(alpha: 0.7),
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () => _onNavTap(4), // Opens the Profile tab
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 120),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.account_circle_rounded,
-                  size: 18,
-                  color: PawlyColors.burntOrange,
-                ),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    displayName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: PawlyText.sans(size: 13.5, weight: FontWeight.w700),
-                  ),
-                ),
-              ],
+    return Semantics(
+      button: true,
+      label: 'Open profile for $displayName',
+      child: Tooltip(
+        message: 'Profile',
+        child: Material(
+          color: PawlyColors.ivory,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => _onNavTap(4),
+            child: const SizedBox(
+              width: 44,
+              height: 44,
+              child: Icon(
+                Icons.person_rounded,
+                size: 23,
+                color: PawlyColors.burntOrange,
+              ),
             ),
           ),
         ),
@@ -526,14 +748,14 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
 
   Widget _buildFilterChips() {
     return SizedBox(
-      height: 60,
+      height: 52,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         clipBehavior: Clip.none,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
         itemCount: _filters.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final option = _filters[i];
           return Center(
@@ -632,7 +854,7 @@ class _PawlySearchFieldState extends State<_PawlySearchField> {
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
         color: PawlyColors.ivory,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(17),
         border: Border.all(
           color: _focused
               ? PawlyColors.burntOrange.withValues(alpha: 0.55)
@@ -644,8 +866,8 @@ class _PawlySearchFieldState extends State<_PawlySearchField> {
             color: PawlyColors.burntOrange.withValues(
               alpha: _focused ? 0.18 : 0.06,
             ),
-            blurRadius: _focused ? 22 : 14,
-            offset: Offset(0, _focused ? 8 : 5),
+            blurRadius: _focused ? 17 : 10,
+            offset: Offset(0, _focused ? 6 : 3),
           ),
         ],
       ),
@@ -657,9 +879,9 @@ class _PawlySearchFieldState extends State<_PawlySearchField> {
         cursorColor: PawlyColors.burntOrange,
         style: PawlyText.sans(size: 15),
         decoration: InputDecoration(
-          hintText: 'Search a name, breed or neighborhood',
+          hintText: 'Search for a little paw...',
           hintStyle: PawlyText.sans(
-            size: 14,
+            size: 13.5,
             weight: FontWeight.w500,
             color: PawlyColors.muted,
           ),
@@ -689,7 +911,7 @@ class _PawlySearchFieldState extends State<_PawlySearchField> {
                   ),
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),
     );
@@ -735,14 +957,14 @@ class _FilterChipButtonState extends State<_FilterChipButton> {
       onTapUp: (_) => setState(() => _pressed = false),
       onTap: widget.onTap,
       child: AnimatedScale(
-        scale: _pressed ? 0.93 : (selected ? 1.04 : 1.0),
+        scale: _pressed ? 0.97 : (selected ? 1.01 : 1.0),
         duration: reduce ? Duration.zero : const Duration(milliseconds: 320),
         curve: Curves.easeOutBack,
         child: AnimatedContainer(
           duration: dur,
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 13),
+          height: 37,
           decoration: BoxDecoration(
             color: selected ? PawlyColors.burntOrange : PawlyColors.ivory,
             borderRadius: BorderRadius.circular(22),
@@ -754,10 +976,10 @@ class _FilterChipButtonState extends State<_FilterChipButton> {
             boxShadow: [
               BoxShadow(
                 color: PawlyColors.burntOrange.withValues(
-                  alpha: selected ? 0.28 : 0.0,
+                  alpha: selected ? 0.17 : 0.0,
                 ),
-                blurRadius: selected ? 12 : 0,
-                offset: Offset(0, selected ? 5 : 0),
+                blurRadius: selected ? 8 : 0,
+                offset: Offset(0, selected ? 3 : 0),
               ),
             ],
           ),
@@ -768,14 +990,14 @@ class _FilterChipButtonState extends State<_FilterChipButton> {
                 tween: ColorTween(end: iconColor),
                 duration: dur,
                 builder: (context, color, _) =>
-                    Icon(widget.icon, size: 17, color: color),
+                    Icon(widget.icon, size: 16, color: color),
               ),
-              const SizedBox(width: 7),
+              const SizedBox(width: 6),
               AnimatedDefaultTextStyle(
                 duration: dur,
                 curve: Curves.easeOutCubic,
                 style: PawlyText.sans(
-                  size: 14,
+                  size: 13,
                   weight: selected ? FontWeight.w800 : FontWeight.w700,
                   color: fg,
                 ),
@@ -795,16 +1017,23 @@ class _FilterChipButtonState extends State<_FilterChipButton> {
 
 class _PostCard extends StatefulWidget {
   const _PostCard({
+    super.key,
     required this.data,
-    required this.isFavorite,
-    required this.onFavorite,
+    required this.isLiked,
+    required this.onLike,
+    required this.isSaved,
+    required this.onSave,
     required this.onOpen,
+    this.removeFromSaved = false,
   });
 
   final Map<String, dynamic> data;
-  final bool isFavorite;
-  final VoidCallback onFavorite;
+  final bool isLiked;
+  final VoidCallback onLike;
+  final bool isSaved;
+  final VoidCallback onSave;
   final VoidCallback onOpen;
+  final bool removeFromSaved;
 
   @override
   State<_PostCard> createState() => _PostCardState();
@@ -812,14 +1041,14 @@ class _PostCard extends StatefulWidget {
 
 class _PostCardState extends State<_PostCard> {
   int _heartBurst = 0; // big heart over the photo (double-tap)
-  int _sparkleBurst = 0; // little sparkles by the heart button (on save)
+  int _sparkleBurst = 0; // little sparkles when a post is liked
   bool _pressed = false;
 
   @override
   void didUpdateWidget(covariant _PostCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Sparkle whenever the post goes from "not saved" to "saved".
-    if (!oldWidget.isFavorite && widget.isFavorite) {
+    // Sparkle whenever the post goes from not liked to liked.
+    if (!oldWidget.isLiked && widget.isLiked) {
       _sparkleBurst++;
     }
   }
@@ -827,8 +1056,8 @@ class _PostCardState extends State<_PostCard> {
   // Double-tap to like and play the heart animation.
   void _onDoubleTap() {
     // If already liked, do not unlike it.
-    if (!widget.isFavorite) {
-      widget.onFavorite();
+    if (!widget.isLiked) {
+      widget.onLike();
     }
 
     // Trigger the animation every time.
@@ -974,7 +1203,10 @@ class _PostCardState extends State<_PostCard> {
                       Positioned(
                         top: 12,
                         left: 12,
-                        child: _CategoryTag(label: category, style: categoryStyle),
+                        child: _CategoryTag(
+                          label: category,
+                          style: categoryStyle,
+                        ),
                       ),
 
                     // 4. Floating info strip (bottom)
@@ -989,7 +1221,7 @@ class _PostCardState extends State<_PostCard> {
                       ),
                     ),
 
-                    // 5. Sparkles when saved
+                    // 5. Sparkles when liked
                     if (_sparkleBurst > 0)
                       Positioned(
                         top: -2,
@@ -997,13 +1229,27 @@ class _PostCardState extends State<_PostCard> {
                         child: _Sparkles(burst: _sparkleBurst),
                       ),
 
-                    // 6. Favorite button (top-right)
+                    // 6. Separate Like and Save buttons (top-right).
                     Positioned(
                       top: 6,
                       right: 6,
-                      child: _HeartButton(
-                        isFavorite: widget.isFavorite,
-                        onTap: widget.onFavorite,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _HeartButton(
+                            isLiked: widget.isLiked,
+                            onTap: widget.onLike,
+                          ),
+                          _BookmarkButton(
+                            isSaved: widget.isSaved,
+                            onTap: widget.onSave,
+                            actionLabel: widget.removeFromSaved
+                                ? 'Remove from Saved Paws'
+                                : widget.isSaved
+                                ? 'Open Saved Paws'
+                                : 'Save and open Saved Paws',
+                          ),
+                        ],
                       ),
                     ),
 
@@ -1012,7 +1258,10 @@ class _PostCardState extends State<_PostCard> {
                       Positioned.fill(
                         child: IgnorePointer(
                           child: Center(
-                            child: _HeartPop(burst: _heartBurst, reduce: reduce),
+                            child: _HeartPop(
+                              burst: _heartBurst,
+                              reduce: reduce,
+                            ),
                           ),
                         ),
                       ),
@@ -1171,9 +1420,9 @@ class _InfoStrip extends StatelessWidget {
 }
 
 class _HeartButton extends StatelessWidget {
-  const _HeartButton({required this.isFavorite, required this.onTap});
+  const _HeartButton({required this.isLiked, required this.onTap});
 
-  final bool isFavorite;
+  final bool isLiked;
   final VoidCallback onTap;
 
   @override
@@ -1182,7 +1431,7 @@ class _HeartButton extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: isFavorite ? 'Remove from saved' : 'Save animal',
+      label: isLiked ? 'Unlike post' : 'Like post',
       child: SizedBox(
         width: 48,
         height: 48,
@@ -1206,12 +1455,72 @@ class _HeartButton extends StatelessWidget {
                   transitionBuilder: (child, anim) =>
                       ScaleTransition(scale: anim, child: child),
                   child: Icon(
-                    isFavorite
+                    isLiked
                         ? Icons.favorite_rounded
                         : Icons.favorite_border_rounded,
-                    key: ValueKey(isFavorite),
+                    key: ValueKey(isLiked),
                     size: 21,
-                    color: isFavorite
+                    color: isLiked
+                        ? PawlyColors.burntOrange
+                        : PawlyColors.espresso.withValues(alpha: 0.7),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Independent bookmark action. Tapping from Home saves and opens tab 3;
+/// tapping from Saved removes the bookmark.
+class _BookmarkButton extends StatelessWidget {
+  const _BookmarkButton({
+    required this.isSaved,
+    required this.onTap,
+    required this.actionLabel,
+  });
+
+  final bool isSaved;
+  final VoidCallback onTap;
+  final String actionLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduce = _reduceMotion(context);
+
+    return Semantics(
+      button: true,
+      label: actionLabel,
+      child: SizedBox(
+        width: 48,
+        height: 48,
+        child: Center(
+          child: Material(
+            color: PawlyColors.ivory.withValues(alpha: 0.92),
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onTap,
+              child: SizedBox(
+                width: 38,
+                height: 38,
+                child: AnimatedSwitcher(
+                  duration: reduce
+                      ? Duration.zero
+                      : const Duration(milliseconds: 320),
+                  switchInCurve: Curves.easeOutBack,
+                  transitionBuilder: (child, anim) =>
+                      ScaleTransition(scale: anim, child: child),
+                  child: Icon(
+                    isSaved
+                        ? Icons.bookmark_rounded
+                        : Icons.bookmark_border_rounded,
+                    key: ValueKey(isSaved),
+                    size: 21,
+                    color: isSaved
                         ? PawlyColors.burntOrange
                         : PawlyColors.espresso.withValues(alpha: 0.7),
                   ),
@@ -1239,11 +1548,7 @@ class _HeartPop extends StatelessWidget {
       children: const [
         // White halo behind, so the heart reads on any photo
         Icon(Icons.favorite_rounded, size: 124, color: Colors.white),
-        Icon(
-          Icons.favorite_rounded,
-          size: 106,
-          color: PawlyColors.burntOrange,
-        ),
+        Icon(Icons.favorite_rounded, size: 106, color: PawlyColors.burntOrange),
       ],
     );
 
@@ -1297,12 +1602,12 @@ class _Sparkles extends StatelessWidget {
           children: [
             for (var i = 0; i < count; i++)
               Icon(
-                Icons.star_rounded,
-                size: i.isEven ? 11.0 : 8.0,
-                color: i.isEven
-                    ? PawlyColors.burntOrange
-                    : const Color(0xFFE9A53B),
-              )
+                    Icons.star_rounded,
+                    size: i.isEven ? 11.0 : 8.0,
+                    color: i.isEven
+                        ? PawlyColors.burntOrange
+                        : const Color(0xFFE9A53B),
+                  )
                   .animate(key: ValueKey('spark-$burst-$i'))
                   .scaleXY(
                     begin: 0.3,
@@ -1376,20 +1681,13 @@ class _WavingPawState extends State<_WavingPaw>
           child: child,
         );
       },
-      
-
-child: ColorFiltered(
-  colorFilter: const ColorFilter.mode(
-    PawlyColors.burntOrange,
-    BlendMode.srcIn,
-  ),
-  child: const Text(
-    '🐾',
-    style: TextStyle(fontSize: 24),
-  ),
-),
-
-
+      child: ColorFiltered(
+        colorFilter: const ColorFilter.mode(
+          PawlyColors.burntOrange,
+          BlendMode.srcIn,
+        ),
+        child: const Text('🐾', style: TextStyle(fontSize: 24)),
+      ),
     );
   }
 }
@@ -1445,7 +1743,7 @@ class _PuppyPeekState extends State<_PuppyPeek>
           );
         },
         child: const RepaintBoundary(
-          child: CustomPaint(size: Size(72, 54), painter: _PuppyPainter()),
+          child: CustomPaint(size: Size(64, 48), painter: _PuppyPainter()),
         ),
       ),
     );
@@ -1818,7 +2116,11 @@ class _EmptyFeed extends StatelessWidget {
                 children: [
                   kitten,
                   Positioned(right: 14, top: 4, child: _sleepyZ(0, 20, reduce)),
-                  Positioned(right: 0, top: 16, child: _sleepyZ(900, 15, reduce)),
+                  Positioned(
+                    right: 0,
+                    top: 16,
+                    child: _sleepyZ(900, 15, reduce),
+                  ),
                 ],
               ),
             ),
@@ -1830,9 +2132,7 @@ class _EmptyFeed extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              searching
-                  ? 'Try a different name, breed or neighborhood.'
-                  : 'Spotted an animal that needs help? Tap Post to add the first one.',
+              searching ? 'Try a different name, breed or neighborhood.' : 'Spotted an animal that needs help? Tap Post to add the first one.',
               textAlign: TextAlign.center,
               style: PawlyText.sans(size: 14, color: PawlyColors.muted),
             ),
@@ -1852,10 +2152,7 @@ class _EmptyFeed extends StatelessWidget {
     );
     if (reduce) return z;
     return z
-        .animate(
-          delay: delayMs.ms,
-          onPlay: (c) => c.repeat(),
-        )
+        .animate(delay: delayMs.ms, onPlay: (c) => c.repeat())
         .fadeIn(duration: 500.ms)
         .moveY(begin: 0, end: -14, duration: 1800.ms, curve: Curves.easeOut)
         .fadeOut(delay: 1300.ms, duration: 500.ms);
@@ -1906,6 +2203,38 @@ class _StatusMessage extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A saved post can be deleted or become unavailable. Let users unsave it.
+class _SavedPostNotice extends StatelessWidget {
+  const _SavedPostNotice({required this.message, required this.onRemove});
+
+  final String message;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      decoration: BoxDecoration(
+        color: PawlyColors.ivory,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.pets_outlined, color: PawlyColors.muted),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: PawlyText.sans(size: 13, color: PawlyColors.muted),
+            ),
+          ),
+          TextButton(onPressed: onRemove, child: const Text('Remove')),
+        ],
       ),
     );
   }
