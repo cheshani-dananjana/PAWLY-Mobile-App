@@ -83,7 +83,7 @@ class _DonationScreenState extends State<DonationScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Donation record saved successfully!'),
+        content: Text('Donation interest saved. No payment has been made.'),
       ),
     );
   } catch (e) {
@@ -110,7 +110,7 @@ class _DonationScreenState extends State<DonationScreen> {
           color: PawlyColors.espressoBrown,
         ),
         title: const Text(
-          'Make a Donation',
+          'Support PAWLY',
           style: TextStyle(
             color: PawlyColors.espressoBrown,
             fontWeight: FontWeight.w800,
@@ -241,7 +241,7 @@ class _DonationScreenState extends State<DonationScreen> {
           ),
         )
       : const Icon(Icons.favorite_rounded),
-  label: Text(_isSaving ? 'Saving...' : 'Continue to Donate'),
+  label: Text(_isSaving ? 'Saving...' : 'Save Donation Intent'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: PawlyColors.burntOrange,
                   foregroundColor: Colors.white,

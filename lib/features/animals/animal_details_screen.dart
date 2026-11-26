@@ -1,4 +1,4 @@
-
+import '../donations/donations_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -187,9 +187,44 @@ SizedBox(
   ),
 ),
 
+
 const SizedBox(height: 12),
+
+// Support PAWLY donation button
+SizedBox(
+  width: double.infinity,
+  child: OutlinedButton.icon(
+    onPressed: () {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const DonationScreen(),
+        ),
+      );
+    },
+    icon: const Icon(Icons.favorite_rounded),
+    label: const Text('Support PAWLY'),
+    style: OutlinedButton.styleFrom(
+      foregroundColor: orange,
+      side: const BorderSide(
+        color: orange,
+        width: 1.5,
+      ),
+      padding: const EdgeInsets.symmetric(
+        vertical: 16,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+  ),
+),
+
+const SizedBox(height: 12),
+
+// Keep the existing adoption button
 if (type.toLowerCase() == 'adoption')
-                SizedBox(
+  SizedBox(
+
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
