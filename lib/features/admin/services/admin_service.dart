@@ -239,4 +239,13 @@ class AdminService {
       transaction.update(userRef, {'account_status': 'disabled'});
     });
   }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> getDeletionRequests() async* {
+    await checkAdminAccess();
+
+    yield* _db
+        .collection('deletion_requests')
+        .orderBy('createdAt', descending: true)
+        .snapshots(includeMetadataChanges: true);
+  }
 }

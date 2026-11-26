@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../auth/screens/login_screen.dart';
 import '../services/admin_service.dart';
 import 'manage_users_screen.dart';
-import 'blocked_users_screen.dart';
 import 'manage_reports_screen.dart';
+import 'blocked_users_screen.dart';
+import 'deletion_requests_screen.dart';
+
+import '../../auth/screens/login_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -18,305 +21,637 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final AdminService _service = AdminService();
 
   static const Color brown = Color(0xFF4A2915);
-  static const Color darkBrown = Color(0xFF251605);
-  static const Color orange = Color(0xFFBF5700);
   static const Color cream = Color(0xFFFFF7EC);
+  static const Color orange = Color(0xFFBF5700);
+  static const Color lightBrown = Color(0xFF8B5E3C);
 
-  late Future<List<int>> _stats;
+  late Future<Map<String, int>> _stats;
   late Future<int> _reportCount;
-
-  bool _loggingOut = false;
+  late Future<int> _deletionCount;
 
   @override
   void initState() {
     super.initState();
-
-    _stats = _loadStats();
-    _reportCount = _service.getPendingReportsCount();
+    _loadData();
   }
 
-  Future<List<int>> _loadStats() async {
-    return Future.wait([
-      _service.getTotalUsers(),
-      _service.getTotalPosts(),
-      _service.getBlockedUsersCount(),
+  // =====================================
+  // LOAD DASHBOARD DATA
+  // =====================================
+
+  void _loadData() {
+    _stats = _loadStats();
+    _reportCount = _service.getPendingReportsCount();
+    _deletionCount = _loadDeletionCount();
+  }
+
+  Future<Map<String, int>> _loadStats() async {
+    await _service.checkAdminAccess();
+
+    final db = FirebaseFirestore.instance;
+
+    final users = await db.collection('users').count().get();
+
+    final posts = await db.collection('posts').count().get();
+
+    final blocked = await db
+        .collection('users')
+        .where('account_status', whereIn: ['banned', 'disabled'])
+        .count()
+        .get();
+
+    return {
+      'users': users.count ?? 0,
+      'posts': posts.count ?? 0,
+      'blocked': blocked.count ?? 0,
+    };
+  }
+
+  Future<int> _loadDeletionCount() async {
+    await _service.checkAdminAccess();
+
+    final result = await FirebaseFirestore.instance
+        .collection('deletion_requests')
+        .where('status', isEqualTo: 'pending')
+        .count()
+        .get();
+
+    return result.count ?? 0;
+  }
+
+  // =====================================
+  // REFRESH DASHBOARD
+  // =====================================
+
+  Future<void> _refreshDashboard() async {
+    if (!mounted) return;
+
+    setState(() {
+      _loadData();
+    });
+
+    await Future.wait<void>([
+      _stats.then<void>((_) {}, onError: (_) {}),
+      _reportCount.then<void>((_) {}, onError: (_) {}),
+      _deletionCount.then<void>((_) {}, onError: (_) {}),
     ]);
   }
 
-  Future<void> _refresh() async {
-    if (!mounted) return;
+  // =====================================
+  // PAGE NAVIGATION
+  // =====================================
 
-    final stats = _loadStats();
-    final reports = _service.getPendingReportsCount();
-
-    setState(() {
-      _stats = stats;
-      _reportCount = reports;
-    });
-
-    try {
-      await Future.wait<Object>([stats, reports]);
-    } catch (_) {
-      // FutureBuilder displays errors.
-    }
-  }
-
-  Future<void> _openScreen(Widget screen) async {
+  Future<void> _openPage(Widget page) async {
     try {
       await _service.checkAdminAccess();
 
       if (!mounted) return;
 
-      await Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+      await Navigator.push(context, MaterialPageRoute(builder: (_) => page));
 
-      if (mounted) {
-        await _refresh();
-      }
-    } catch (_) {
+      if (!mounted) return;
+
+      await _refreshDashboard();
+    } catch (error) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Administrator access denied.')),
+        SnackBar(
+          content: Text('Access denied: $error'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
-  Future<void> _logout() async {
-    if (_loggingOut) return;
+  // =====================================
+  // ADMIN LOGOUT
+  // =====================================
 
-    setState(() => _loggingOut = true);
+  Future<void> _logout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: brown,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
 
     try {
       await FirebaseAuth.instance.signOut();
 
       if (!mounted) return;
 
-      Navigator.of(context).pushAndRemoveUntil(
+      Navigator.pushAndRemoveUntil(
+        context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (_) => false,
+        (route) => false,
       );
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
 
-      setState(() => _loggingOut = false);
-
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Logout failed. Please try again.')),
+        SnackBar(
+          content: Text('Logout failed: $error'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
-  Widget _statCard(String title, String value, IconData icon) {
+  // =====================================
+  // STATISTICS CARD
+  // =====================================
+
+  Widget _statCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4DFC5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8B9A5)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: brown.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: orange, size: 28),
-          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 25),
+          ),
+          const SizedBox(height: 10),
+
           Text(
             value,
             style: const TextStyle(
-              fontSize: 26,
+              fontSize: 27,
               fontWeight: FontWeight.bold,
-              color: darkBrown,
+              color: brown,
             ),
           ),
+
+          const SizedBox(height: 4),
+
           Text(
             title,
-            style: const TextStyle(color: brown, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.black54,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _menuCard(
-    String title,
-    String description,
-    IconData icon,
-    Widget screen,
-  ) {
+  // =====================================
+  // ADMIN MENU CARD
+  // =====================================
+
+  Widget _menuCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return Card(
       color: Colors.white,
+      elevation: 1,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: ListTile(
         contentPadding: const EdgeInsets.all(14),
-        leading: CircleAvatar(
-          backgroundColor: brown,
-          child: Icon(icon, color: Colors.white),
+
+        leading: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: color, size: 26),
         ),
+
         title: Text(
           title,
-          style: const TextStyle(color: darkBrown, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: brown,
+          ),
         ),
-        subtitle: Text(description),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: brown),
-        onTap: () => _openScreen(screen),
+
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Text(
+            subtitle,
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+        ),
+
+        trailing: const Icon(Icons.chevron_right, color: brown),
+
+        onTap: onTap,
       ),
     );
   }
+
+  // =====================================
+  // FORMAT STATISTICS
+  // =====================================
+
+  String _countValue(AsyncSnapshot<int> snapshot) {
+    if (snapshot.hasError) return 'N/A';
+
+    if (!snapshot.hasData) return '...';
+
+    return '${snapshot.data}';
+  }
+
+  // =====================================
+  // DASHBOARD UI
+  // =====================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: cream,
+
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: brown,
         foregroundColor: Colors.white,
-        title: const Row(
-          children: [
-            Icon(Icons.pets),
-            SizedBox(width: 10),
-            Text('PAWLY Admin'),
-          ],
+
+        title: const Text(
+          'Admin Dashboard',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
+
         actions: [
           IconButton(
-            onPressed: _refresh,
+            tooltip: 'Refresh Dashboard',
+            onPressed: _refreshDashboard,
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
           ),
+
           IconButton(
-            onPressed: _loggingOut ? null : _logout,
-            icon: const Icon(Icons.logout),
             tooltip: 'Logout',
+            onPressed: _logout,
+            icon: const Icon(Icons.logout),
           ),
         ],
       ),
+
       body: RefreshIndicator(
-        onRefresh: _refresh,
-        child: ListView(
+        color: brown,
+        onRefresh: _refreshDashboard,
+
+        child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(20),
-          children: [
-            const Text(
-              'Welcome, Admin!',
-              style: TextStyle(
-                fontSize: 27,
-                fontWeight: FontWeight.bold,
-                color: darkBrown,
-              ),
-            ),
-            const SizedBox(height: 5),
-            const Text(
-              'Animal Welfare Management System',
-              style: TextStyle(color: brown),
-            ),
-            const SizedBox(height: 24),
-            FutureBuilder<List<int>>(
-              future: _stats,
-              builder: (context, snapshot) {
-                final stats = snapshot.data;
-                final loaded =
-                    snapshot.connectionState == ConnectionState.done &&
-                    !snapshot.hasError &&
-                    stats != null;
+          padding: const EdgeInsets.all(16),
 
-                return Column(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ==========================
+              // WELCOME SECTION
+              // ==========================
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [brown, lightBrown],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+
+                child: Row(
                   children: [
-                    GridView.count(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1.12,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Welcome, Admin!',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 23,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+
+                          SizedBox(height: 8),
+
+                          Text(
+                            'Manage users, reports and '
+                            'keep the PAWLY community safe.',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+
+                      child: const Icon(
+                        Icons.admin_panel_settings,
+                        color: Colors.white,
+                        size: 48,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              const Text(
+                'Platform Overview',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: brown,
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // ==========================
+              // STATISTICS GRID
+              // ==========================
+              FutureBuilder<Map<String, int>>(
+                future: _stats,
+                builder: (context, snapshot) {
+                  final data = snapshot.data;
+
+                  String value(String key) {
+                    if (snapshot.hasError) return 'N/A';
+
+                    if (data == null) return '...';
+
+                    return '${data[key] ?? 0}';
+                  }
+
+                  return GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.10,
+
+                    children: [
+                      _statCard(
+                        title: 'Total Users',
+                        value: value('users'),
+                        icon: Icons.people,
+                        color: Colors.blue,
+                      ),
+
+                      _statCard(
+                        title: 'Animal Posts',
+                        value: value('posts'),
+                        icon: Icons.pets,
+                        color: lightBrown,
+                      ),
+
+                      FutureBuilder<int>(
+                        future: _reportCount,
+                        builder: (context, snapshot) {
+                          return _statCard(
+                            title: 'Pending Reports',
+                            value: _countValue(snapshot),
+                            icon: Icons.flag,
+                            color: orange,
+                          );
+                        },
+                      ),
+
+                      _statCard(
+                        title: 'Blocked Users',
+                        value: value('blocked'),
+                        icon: Icons.block,
+                        color: Colors.red,
+                      ),
+                    ],
+                  );
+                },
+              ),
+
+              const SizedBox(height: 12),
+
+              // ==========================
+              // PENDING DELETION COUNT
+              // ==========================
+              FutureBuilder<int>(
+                future: _deletionCount,
+                builder: (context, snapshot) {
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+
+                    child: Row(
                       children: [
-                        _statCard(
-                          'Registered Users',
-                          loaded ? '${stats[0]}' : '—',
-                          Icons.people,
-                        ),
-                        _statCard(
-                          'Animal Posts',
-                          loaded ? '${stats[1]}' : '—',
-                          Icons.pets,
-                        ),
-                        FutureBuilder<int>(
-                          future: _reportCount,
-                          builder: (context, reportSnapshot) {
-                            String value = '—';
+                        Container(
+                          padding: const EdgeInsets.all(12),
 
-                            if (reportSnapshot.hasError) {
-                              value = 'N/A';
-                            } else if (reportSnapshot.connectionState ==
-                                    ConnectionState.done &&
-                                reportSnapshot.hasData) {
-                              value = '${reportSnapshot.data}';
-                            }
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFE5E5),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
 
-                            return _statCard(
-                              'Pending Reports',
-                              value,
-                              Icons.flag,
-                            );
-                          },
+                          child: const Icon(
+                            Icons.delete_outline,
+                            color: Color(0xFF8B0000),
+                            size: 28,
+                          ),
                         ),
-                        _statCard(
-                          'Blocked Users',
-                          loaded ? '${stats[2]}' : '—',
-                          Icons.person_off,
+
+                        const SizedBox(width: 14),
+
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Pending Deletion Requests',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: brown,
+                                  fontSize: 15,
+                                ),
+                              ),
+
+                              SizedBox(height: 5),
+
+                              Text(
+                                'Awaiting authorized review',
+                                style: TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        Text(
+                          _countValue(snapshot),
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF8B0000),
+                          ),
                         ),
                       ],
                     ),
-                    if (snapshot.hasError)
-                      TextButton(
-                        onPressed: _refresh,
-                        child: const Text('Unable to load statistics. Retry'),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 25),
+
+              // ==========================
+              // ADMIN MANAGEMENT MENU
+              // ==========================
+              const Text(
+                'Management Tools',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: brown,
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // MANAGE USERS
+              _menuCard(
+                title: 'Manage Users',
+                subtitle: 'View and manage registered users',
+                icon: Icons.manage_accounts,
+                color: Colors.blue,
+
+                onTap: () => _openPage(const ManageUsersScreen()),
+              ),
+
+              // MANAGE REPORTS
+              _menuCard(
+                title: 'Manage Reports',
+                subtitle: 'Review and resolve reported posts',
+                icon: Icons.flag,
+                color: orange,
+
+                onTap: () => _openPage(const ManageReportsScreen()),
+              ),
+
+              // BLOCKED ACCOUNTS
+              _menuCard(
+                title: 'Blocked Accounts',
+                subtitle: 'Manage banned and disabled accounts',
+                icon: Icons.block,
+                color: Colors.red,
+
+                onTap: () => _openPage(const BlockedUsersScreen()),
+              ),
+
+              // NEW DELETION REQUESTS SCREEN
+              _menuCard(
+                title: 'Deletion Requests',
+                subtitle: 'View and track account deletion requests',
+                icon: Icons.delete_outline,
+                color: const Color(0xFF8B0000),
+
+                onTap: () => _openPage(const DeletionRequestsScreen()),
+              ),
+
+              const SizedBox(height: 15),
+
+              // ==========================
+              // SECURITY NOTICE
+              // ==========================
+              Container(
+                padding: const EdgeInsets.all(14),
+
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF4DFC5),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+
+                child: const Row(
+                  children: [
+                    Icon(Icons.verified_user, color: brown),
+
+                    SizedBox(width: 10),
+
+                    Expanded(
+                      child: Text(
+                        'Authorized administrator access only. '
+                        'Account actions are protected by '
+                        'Firebase Security Rules.',
+                        style: TextStyle(color: brown, fontSize: 12),
                       ),
+                    ),
                   ],
-                );
-              },
-            ),
-            const SizedBox(height: 28),
-            const Text(
-              'Management',
-              style: TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.bold,
-                color: darkBrown,
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
-            _menuCard(
-              'Manage Users',
-              'View, ban or disable users',
-              Icons.manage_accounts,
-              const ManageUsersScreen(),
-            ),
-            _menuCard(
-              'Manage Reports',
-              'Review and resolve reported posts',
-              Icons.flag_outlined,
-              const ManageReportsScreen(),
-            ),
-            _menuCard(
-              'Blocked Accounts',
-              'Reactivate blocked users',
-              Icons.block,
-              const BlockedUsersScreen(),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _loggingOut ? null : _logout,
-              icon: const Icon(Icons.logout),
-              label: const Text('Logout'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: brown,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-              ),
-            ),
-          ],
+
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );

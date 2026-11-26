@@ -60,7 +60,7 @@ service cloud.firestore {
     function hasPendingDeletion(uid) {
       return existsAfter(deletionPath(uid)) &&
         getAfter(deletionPath(uid))
-          .data.status == 'pending';
+          .data.status in ['pending', 'approved', 'completed'];
     }
 
     // Validate report before requesting deletion
