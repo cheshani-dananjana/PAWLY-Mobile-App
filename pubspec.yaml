@@ -1,3 +1,4 @@
+
 name: pawly
 description: "A new Flutter project."
 publish_to: 'none'
@@ -20,6 +21,11 @@ dependencies:
   flutter_animate: ^4.5.2
   google_fonts: ^9.0.0
   http: ^1.6.0
+  flutter_map: ^8.3.2
+  flutter_map_vector_tiles: ^2.12.0
+  latlong2: ^0.10.1
+  geolocator: ^14.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
