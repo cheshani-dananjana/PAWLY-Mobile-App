@@ -111,14 +111,20 @@ class _MapScreenState extends State<MapScreen> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
+  // ANIMAL MARKER
   Widget _buildAnimalMarker(Map<String, dynamic> pet) {
     final imageUrl = pet['imageUrl']?.toString() ?? '';
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
+        debugPrint('DOG TAPPED: ${pet['name']}');
+
         setState(() {
-          _selectedPet = pet;
+          _selectedPet = Map<String, dynamic>.from(pet);
         });
+
+        _showMessage('Selected: ${pet['name'] ?? 'Animal'}');
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -171,6 +177,7 @@ class _MapScreenState extends State<MapScreen> {
     ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack);
   }
 
+  // SELECTED ANIMAL DETAILS CARD
   Widget _buildSelectedPetCard() {
     if (_selectedPet == null) {
       return const SizedBox.shrink();
@@ -193,33 +200,37 @@ class _MapScreenState extends State<MapScreen> {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: imageUrl.isNotEmpty
                 ? Image.network(
                     imageUrl,
-                    width: 70,
-                    height: 70,
+                    width: 80,
+                    height: 80,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 70,
-                      height: 70,
-                      color: Colors.orange.shade100,
-                      child: const Icon(Icons.pets),
-                    ),
+                    errorBuilder: (_, __, ___) {
+                      return Container(
+                        width: 80,
+                        height: 80,
+                        color: Colors.orange.shade100,
+                        child: const Icon(Icons.pets),
+                      );
+                    },
                   )
                 : Container(
-                    width: 70,
-                    height: 70,
+                    width: 80,
+                    height: 80,
                     color: Colors.orange.shade100,
                     child: const Icon(Icons.pets),
                   ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
@@ -234,20 +245,20 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ),
                     GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: () {
                         setState(() {
                           _selectedPet = null;
                         });
                       },
-                      child: const Icon(
-                        Icons.close,
-                        size: 18,
-                        color: Colors.grey,
+                      child: const Padding(
+                        padding: EdgeInsets.all(4),
+                        child: Icon(Icons.close, size: 20, color: Colors.grey),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   pet['breed']?.toString() ?? 'Animal Report',
                   style: const TextStyle(
@@ -255,7 +266,7 @@ class _MapScreenState extends State<MapScreen> {
                     color: Color(0xFF8A7A66),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 5),
                 Row(
                   children: [
                     const Icon(
@@ -276,7 +287,7 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 5),
                 Text(
                   pet['status']?.toString() ?? 'Animal Report',
                   style: const TextStyle(
@@ -289,7 +300,7 @@ class _MapScreenState extends State<MapScreen> {
                   const SizedBox(height: 5),
                   Text(
                     pet['description'].toString(),
-                    maxLines: 2,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 12,
@@ -316,6 +327,7 @@ class _MapScreenState extends State<MapScreen> {
       backgroundColor: const Color(0xFFE8EEF5),
       body: Stack(
         children: [
+          // MAP AND FIRESTORE DATA
           FutureBuilder<vt.Style>(
             future: _styleFuture,
             builder: (context, styleSnapshot) {
@@ -392,7 +404,8 @@ class _MapScreenState extends State<MapScreen> {
 
                       if (latitude is! num || longitude is! num) {
                         debugPrint(
-                          'SKIPPED POST: ${data['animalName']} '
+                          'SKIPPED POST: '
+                          '${data['animalName']} '
                           '(Missing or invalid coordinates)',
                         );
                         continue;
@@ -476,6 +489,8 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                         ],
                       ),
+
+                      // ANIMAL MARKER COUNTER
                       Positioned(
                         bottom: 20,
                         left: 16,
@@ -507,6 +522,8 @@ class _MapScreenState extends State<MapScreen> {
               );
             },
           ),
+
+          // TOP BAR AND MY LOCATION BUTTON
           Positioned(
             top: 16,
             left: 20,
@@ -569,6 +586,8 @@ class _MapScreenState extends State<MapScreen> {
               ],
             ),
           ),
+
+          // SELECTED DOG DETAILS
           if (_selectedPet != null)
             Positioned(
               bottom: 24,
