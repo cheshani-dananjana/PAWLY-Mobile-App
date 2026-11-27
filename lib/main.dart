@@ -17,11 +17,19 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (useEmulator) {
-    // Local Firebase configuration
+    final bool isAndroid =
+        !kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android;
+
+    final String host =
+        isAndroid ? '10.0.2.2' : '127.0.0.1';
+
     await Firebase.initializeApp(
-      options: const FirebaseOptions(
+      options: FirebaseOptions(
         apiKey: 'dummy-api-key',
-        appId: '1:123456789012:web:0000000000000000000000',
+        appId: isAndroid
+            ? '1:123456789012:android:0000000000000000000000'
+            : '1:123456789012:web:0000000000000000000000',
         messagingSenderId: '123456789012',
         projectId: 'demo-pawly',
         authDomain: 'demo-pawly.firebaseapp.com',
@@ -29,27 +37,32 @@ Future<void> main() async {
       ),
     );
 
-    // Emulator host
-    final String host =
-        !kIsWeb && defaultTargetPlatform == TargetPlatform.android
-        ? '10.0.2.2'
-        : '127.0.0.1';
+    if (Firebase.app().options.projectId != 'demo-pawly') {
+      throw StateError(
+        'Invalid Firebase project for local testing.',
+      );
+    }
 
-    // Authentication Emulator
-    await FirebaseAuth.instance.useAuthEmulator(host, 9099);
-
-    // Firestore Emulator
-    FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+    await FirebaseAuth.instance.useAuthEmulator(
+      host,
+      9099,
+    );
 
     FirebaseFirestore.instance.settings = const Settings(
       persistenceEnabled: false,
     );
 
+    FirebaseFirestore.instance.useFirestoreEmulator(
+      host,
+      8080,
+    );
+
     debugPrint('PAWLY: LOCAL EMULATOR MODE');
-    debugPrint('Firebase project: ${Firebase.app().options.projectId}');
+    debugPrint(
+      'Firebase project: ${Firebase.app().options.projectId}',
+    );
     debugPrint('Emulator host: $host');
   } else {
-    // Actual Shared Firebase configuration
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
@@ -57,13 +70,19 @@ Future<void> main() async {
     debugPrint('PAWLY: SHARED FIREBASE MODE');
   }
 
-  final User? savedUser = await FirebaseAuth.instance.authStateChanges().first;
+  final User? savedUser =
+      await FirebaseAuth.instance.authStateChanges().first;
 
-  runApp(MyApp(isSignedIn: savedUser != null));
+  runApp(
+    MyApp(isSignedIn: savedUser != null),
+  );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key, required this.isSignedIn});
+  const MyApp({
+    super.key,
+    required this.isSignedIn,
+  });
 
   final bool isSignedIn;
 
@@ -76,7 +95,9 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFF251605),
       ),
-      home: isSignedIn ? const AccountGate() : const SplashScreen(),
+      home: isSignedIn
+          ? const AccountGate()
+          : const SplashScreen(),
     );
   }
 }
