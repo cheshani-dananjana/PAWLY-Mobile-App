@@ -329,7 +329,9 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     } else if (_tabIndex == 3) {
       currentBody = _buildSavedTab();
     } else if (_tabIndex == 4) {
-      currentBody = ProfileScreen(); // Profile Screen (Index 4)
+      currentBody = ProfileScreen(
+        onOpenSaved: () => _onNavTap(3),
+      ); // Profile Screen (Index 4)
     } else {
       currentBody = _buildFeed();
     }
@@ -374,7 +376,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 hasScrollBody: false,
                 child: _StatusMessage(
                   icon: Icons.cloud_off_rounded,
-                  title: 'Couldn’t load the feed',
+                  title: 'Couldnâ€™t load the feed',
                   message: 'Check your connection and try again.',
                   detail: '${snapshot.error}',
                 ),
@@ -447,7 +449,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // SAVED PAWS — bookmarked posts only, stored per signed-in Firebase user
+  // SAVED PAWS â€” bookmarked posts only, stored per signed-in Firebase user
   // ---------------------------------------------------------------------------
 
   Widget _buildSavedTab() {
@@ -466,7 +468,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     if (_savedError != null) {
       return _StatusMessage(
         icon: Icons.cloud_off_rounded,
-        title: 'Couldn’t load saved paws',
+        title: 'Couldnâ€™t load saved paws',
         message: 'Check your connection and Firestore permissions.',
         detail: '$_savedError',
       );
@@ -523,7 +525,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return _SavedPostNotice(
-                      message: 'Couldn’t load this post.',
+                      message: 'Couldnâ€™t load this post.',
                       onRemove: () => _removeSavedPost(id),
                     );
                   }
@@ -1017,7 +1019,7 @@ class _FilterChipButtonState extends State<_FilterChipButton> {
 }
 
 // =============================================================================
-// POST CARD — "Gallery Print"
+// POST CARD â€” "Gallery Print"
 // =============================================================================
 
 class _PostCard extends StatefulWidget {
@@ -1208,7 +1210,10 @@ class _PostCardState extends State<_PostCard> {
                       Positioned(
                         top: 12,
                         left: 12,
-                        child: _CategoryTag(label: category, style: categoryStyle),
+                        child: _CategoryTag(
+                          label: category,
+                          style: categoryStyle,
+                        ),
                       ),
 
                     // 4. Floating info strip (bottom)
@@ -1260,7 +1265,10 @@ class _PostCardState extends State<_PostCard> {
                       Positioned.fill(
                         child: IgnorePointer(
                           child: Center(
-                            child: _HeartPop(burst: _heartBurst, reduce: reduce),
+                            child: _HeartPop(
+                              burst: _heartBurst,
+                              reduce: reduce,
+                            ),
                           ),
                         ),
                       ),
@@ -1275,7 +1283,7 @@ class _PostCardState extends State<_PostCard> {
   }
 }
 
-/// Category pill with a tiny "collar ring" — PAWLY's signature detail.
+/// Category pill with a tiny "collar ring" â€” PAWLY's signature detail.
 class _CategoryTag extends StatelessWidget {
   const _CategoryTag({required this.label, required this.style});
 
@@ -1393,7 +1401,7 @@ class _InfoStrip extends StatelessWidget {
                 if (hasTime) ...[
                   if (hasLocation)
                     Text(
-                      '  ·  ',
+                      '  Â·  ',
                       style: PawlyText.sans(
                         size: 12.5,
                         color: PawlyColors.muted,
@@ -1547,11 +1555,7 @@ class _HeartPop extends StatelessWidget {
       children: const [
         // White halo behind, so the heart reads on any photo
         Icon(Icons.favorite_rounded, size: 124, color: Colors.white),
-        Icon(
-          Icons.favorite_rounded,
-          size: 106,
-          color: PawlyColors.burntOrange,
-        ),
+        Icon(Icons.favorite_rounded, size: 106, color: PawlyColors.burntOrange),
       ],
     );
 
@@ -1605,12 +1609,12 @@ class _Sparkles extends StatelessWidget {
           children: [
             for (var i = 0; i < count; i++)
               Icon(
-                Icons.star_rounded,
-                size: i.isEven ? 11.0 : 8.0,
-                color: i.isEven
-                    ? PawlyColors.burntOrange
-                    : const Color(0xFFE9A53B),
-              )
+                    Icons.star_rounded,
+                    size: i.isEven ? 11.0 : 8.0,
+                    color: i.isEven
+                        ? PawlyColors.burntOrange
+                        : const Color(0xFFE9A53B),
+                  )
                   .animate(key: ValueKey('spark-$burst-$i'))
                   .scaleXY(
                     begin: 0.3,
@@ -1636,7 +1640,7 @@ class _Sparkles extends StatelessWidget {
 }
 
 // =============================================================================
-// HEADER ILLUSTRATIONS (drawn in code — no asset files needed)
+// HEADER ILLUSTRATIONS (drawn in code â€” no asset files needed)
 // =============================================================================
 
 /// A small paw that waves once after the greeting appears.
@@ -1689,7 +1693,7 @@ class _WavingPawState extends State<_WavingPaw>
           PawlyColors.burntOrange,
           BlendMode.srcIn,
         ),
-        child: const Text('🐾', style: TextStyle(fontSize: 24)),
+        child: const Text('ðŸ¾', style: TextStyle(fontSize: 24)),
       ),
     );
   }
@@ -2058,7 +2062,7 @@ class _PawLoaderState extends State<_PawLoader>
         ),
         const SizedBox(height: 14),
         Text(
-          'Finding little paws…',
+          'Finding little pawsâ€¦',
           style: PawlyText.sans(
             size: 13.5,
             weight: FontWeight.w500,
@@ -2119,7 +2123,11 @@ class _EmptyFeed extends StatelessWidget {
                 children: [
                   kitten,
                   Positioned(right: 14, top: 4, child: _sleepyZ(0, 20, reduce)),
-                  Positioned(right: 0, top: 16, child: _sleepyZ(900, 15, reduce)),
+                  Positioned(
+                    right: 0,
+                    top: 16,
+                    child: _sleepyZ(900, 15, reduce),
+                  ),
                 ],
               ),
             ),
@@ -2131,9 +2139,7 @@ class _EmptyFeed extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              searching
-                  ? 'Try a different name, breed or neighborhood.'
-                  : 'Spotted an animal that needs help? Tap Post to add the first one.',
+              searching ? 'Try a different name, breed or neighborhood.' : 'Spotted an animal that needs help? Tap Post to add the first one.',
               textAlign: TextAlign.center,
               style: PawlyText.sans(size: 14, color: PawlyColors.muted),
             ),
@@ -2153,10 +2159,7 @@ class _EmptyFeed extends StatelessWidget {
     );
     if (reduce) return z;
     return z
-        .animate(
-          delay: delayMs.ms,
-          onPlay: (c) => c.repeat(),
-        )
+        .animate(delay: delayMs.ms, onPlay: (c) => c.repeat())
         .fadeIn(duration: 500.ms)
         .moveY(begin: 0, end: -14, duration: 1800.ms, curve: Curves.easeOut)
         .fadeOut(delay: 1300.ms, duration: 500.ms);
@@ -2283,7 +2286,7 @@ class _PlaceholderTab extends StatelessWidget {
 }
 
 // =============================================================================
-// BOTTOM NAVIGATION (unchanged — also used by CreatePostScreen)
+// BOTTOM NAVIGATION (unchanged â€” also used by CreatePostScreen)
 // =============================================================================
 
 class PawlyBottomNav extends StatelessWidget {

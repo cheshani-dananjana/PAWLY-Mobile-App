@@ -1,40 +1,72 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../auth/services/auth_service.dart';
+import '../adoption/my_applications_screen.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../adoption/my_applications_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-
 
 import 'package:pawly/features/auth/screens/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, required this.onOpenSaved});
+  final VoidCallback onOpenSaved;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // Editable profile state
-  String _displayName = 'Thulakshie Attanayake';
-  String _phone = '+94 77 123 4567';
+  String _displayName = '';
+  String _phone = '';
+  String _email = '';
+  bool _loaded = false;
   bool _pushNotifications = true;
   bool _emailAlerts = true;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileSub;
 
   @override
   void initState() {
     super.initState();
     final user = FirebaseAuth.instance.currentUser;
-    if (user?.displayName != null && user!.displayName!.isNotEmpty) {
-      _displayName = user.displayName!;
-    }
+    if (user == null) return;
+    _profileSub = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .snapshots()
+        .listen(
+          (doc) {
+            if (!mounted) return;
+            final data = doc.data();
+            setState(() {
+              _loaded = data != null;
+              _displayName = data?['full_name']?.toString() ?? '';
+              _phone = data?['phone_number']?.toString() ?? '';
+              _email = data?['email']?.toString() ?? user.email ?? '';
+            });
+          },
+          onError: (Object error) {
+            if (mounted) setState(() => _loaded = false);
+          },
+        );
+  }
+
+  @override
+  void dispose() {
+    _profileSub?.cancel();
+    super.dispose();
   }
 
   // 1. Edit Profile Modal
-  void _openEditProfile() {
+  void _openEditProfile() async {
+    if (!_loaded) return;
     final nameController = TextEditingController(text: _displayName);
     final phoneController = TextEditingController(text: _phone);
 
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: const Color(0xFFFDF8ED),
@@ -98,11 +130,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                onPressed: () {
-                  setState(() {
-                    _displayName = nameController.text;
-                    _phone = phoneController.text;
-                  });
+                onPressed: () async {
+                  if (nameController.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Enter your name.')),
+                    );
+                    return;
+                  }
+                  final error = await AuthService().updateUserProfile(
+                    fullName: nameController.text,
+                    phoneNumber: phoneController.text,
+                  );
+                  if (!context.mounted) return;
+                  if (error != null) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(error)));
+                    return;
+                  }
                   Navigator.pop(context);
                 },
                 child: const Text(
@@ -117,66 +161,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 2. Saved Animals Modal
-  void _openSavedAnimals() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFFFDF8ED),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Saved Paws',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF251605),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView(
-                children: const [
-                  ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: NetworkImage(
-                        'https://images.unsplash.com/photo-1543466835-00a7907e9de1',
-                      ),
-                    ),
-                    title: Text(
-                      'Max (Golden Retriever)',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text('Horana · 2 years'),
-                    trailing: Icon(Icons.favorite, color: Color(0xFFBF5700)),
-                  ),
-                  Divider(),
-                  ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: NetworkImage(
-                        'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba',
-                      ),
-                    ),
-                    title: Text(
-                      'Luna (Tabby Cat)',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text('Kurunegala · 1 year'),
-                    trailing: Icon(Icons.favorite, color: Color(0xFFBF5700)),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  void _openSavedAnimals() => widget.onOpenSaved();
 
   // 3. Notifications Modal
   void _openNotifications() {
@@ -297,8 +282,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    final email = user?.email ?? 'thulakshie.att@gmail.com';
+    final email = _email;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF8ED),
@@ -409,9 +393,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     child: const CircleAvatar(
                       radius: 52,
-                      backgroundImage: NetworkImage(
-                        'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
-                      ),
+                      child: Icon(Icons.person, size: 52),
                     ),
                   ).animate().scale(
                     duration: 500.ms,
@@ -420,7 +402,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 16),
                   Text(
-                    _displayName,
+                    _loaded ? _displayName : 'Profile unavailable',
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -460,19 +442,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: _openSavedAnimals,
                   ),
 
-_buildProfileCard(
-  icon: Icons.assignment_outlined,
-  title: 'My Applications',
-  subtitle: 'Track your adoption and foster requests',
-  onTap: () {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const MyApplicationsScreen(),
-      ),
-    );
-  },
-),
+                  _buildProfileCard(
+                    icon: Icons.assignment_outlined,
+                    title: 'My Applications',
+                    subtitle: 'Track your adoption and foster requests',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const MyApplicationsScreen(),
+                        ),
+                      );
+                    },
+                  ),
 
+                  _buildProfileCard(
+                    icon: Icons.assignment_outlined,
+                    title: 'My Applications',
+                    subtitle: 'View your adoption applications',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const MyApplicationsScreen(),
+                      ),
+                    ),
+                  ),
                   _buildProfileCard(
                     icon: Icons.notifications_active_outlined,
                     title: 'Notifications',

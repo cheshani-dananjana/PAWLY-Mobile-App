@@ -4,7 +4,8 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:pawly/features/home/home_feed_screen.dart';
+
+import 'account_gate.dart';
 
 import '../services/auth_service.dart';
 import 'forgot_password_screen.dart';
@@ -254,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen>
         _showMessage(error, isError: true);
       } else {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => HomeFeedScreen()),
+          MaterialPageRoute(builder: (_) => const AccountGate()),
           (route) => false,
         );
       }
