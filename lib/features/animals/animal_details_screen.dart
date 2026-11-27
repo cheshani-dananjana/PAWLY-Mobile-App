@@ -1,8 +1,10 @@
-
+import '../reporting/report_post_screen.dart';
+import '../donations/donations_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../adoption/apply_adoption_screen.dart';
+import '../tendering/tender_care_screen.dart';
 
 class AnimalDetailsScreen extends StatelessWidget {
   const AnimalDetailsScreen({
@@ -159,8 +161,71 @@ class AnimalDetailsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
 
-              if (type.toLowerCase() == 'adoption')
-                SizedBox(
+              
+SizedBox(
+  width: double.infinity,
+  child: ElevatedButton.icon(
+    onPressed: () {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => TenderCareScreen(
+            postId: postId,
+            animalName: name,
+          ),
+        ),
+      );
+    },
+    icon: const Icon(Icons.volunteer_activism_rounded),
+    label: const Text('Provide Care'),
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFFBF5700),
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+  ),
+),
+
+
+const SizedBox(height: 12),
+
+// Support PAWLY donation button
+SizedBox(
+  width: double.infinity,
+  child: OutlinedButton.icon(
+    onPressed: () {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const DonationScreen(),
+        ),
+      );
+    },
+    icon: const Icon(Icons.favorite_rounded),
+    label: const Text('Support PAWLY'),
+    style: OutlinedButton.styleFrom(
+      foregroundColor: orange,
+      side: const BorderSide(
+        color: orange,
+        width: 1.5,
+      ),
+      padding: const EdgeInsets.symmetric(
+        vertical: 16,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+  ),
+),
+
+const SizedBox(height: 12),
+
+// Keep the existing adoption button
+if (type.toLowerCase() == 'adoption')
+  SizedBox(
+
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
@@ -181,12 +246,48 @@ class AnimalDetailsScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                         vertical: 16,
                       ),
+                    
                     ),
                   ),
                 ),
+
+              // Report Post button
+              const SizedBox(height: 12),
+
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ReportPostScreen(
+                          postId: postId,
+                          animalName: name,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.flag_outlined),
+                  label: const Text('Report Post'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF9B3D28),
+                    side: const BorderSide(
+                      color: Color(0xFF9B3D28),
+                      width: 1.5,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         );
+
       },
     );
   }
