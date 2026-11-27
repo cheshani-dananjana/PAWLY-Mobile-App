@@ -17,10 +17,10 @@ const {
 
 async function runTests() {
   const env = await initializeTestEnvironment({
-    projectId: "demo-pawly",
+    projectId: "demo-pawly-test",
     firestore: {
       host: "127.0.0.1",
-      port: 8080,
+      port: 8081,
       rules: fs.readFileSync(
         path.join(__dirname, "../firestore.rules"),
         "utf8"
