@@ -1,20 +1,16 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // =====================================
-    // HELPER FUNCTIONS
-    // =====================================
+    // 1. Helper Functions
 
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() &&
-        request.auth.uid == userId;
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
     }
 
     function userPath(uid) {
@@ -32,51 +28,39 @@ service cloud.firestore {
     function isActive() {
       return isSignedIn() &&
         exists(userPath(request.auth.uid)) &&
-        get(userPath(request.auth.uid))
-          .data.account_status == 'active' &&
-        get(userPath(request.auth.uid))
-          .data.role in ['user', 'admin'];
+        get(userPath(request.auth.uid)).data.account_status == 'active' &&
+        get(userPath(request.auth.uid)).data.role in ['user', 'admin'];
     }
 
     function isAdmin() {
       return isActive() &&
-        get(userPath(request.auth.uid))
-          .data.role == 'admin';
+        get(userPath(request.auth.uid)).data.role == 'admin';
+    }
+
+    function hasPendingDeletion(uid) {
+      return existsAfter(deletionPath(uid)) &&
+        getAfter(deletionPath(uid)).data.status
+          in ['pending', 'approved', 'completed'];
     }
 
     function validReportedPost(postId, reportedUserId) {
       return postId is string &&
+        postId.size() > 0 &&
         reportedUserId is string &&
-        exists(
-          /databases/$(database)/documents/posts/$(postId)
-        ) &&
-        get(
-          /databases/$(database)/documents/posts/$(postId)
-        ).data.userId == reportedUserId;
+        exists(/databases/$(database)/documents/posts/$(postId)) &&
+        get(/databases/$(database)/documents/posts/$(postId))
+          .data.userId == reportedUserId;
     }
-
-    // Check whether a deletion request is pending
-
-    function hasPendingDeletion(uid) {
-      return existsAfter(deletionPath(uid)) &&
-        getAfter(deletionPath(uid))
-          .data.status in ['pending', 'approved', 'completed'];
-    }
-
-    // Validate report before requesting deletion
 
     function validDeletionReport(reportId, uid) {
       return reportId is string &&
         exists(reportPath(reportId)) &&
-        get(reportPath(reportId))
-          .data.reportedUserId == uid &&
-        get(reportPath(reportId))
-          .data.status in ['pending', 'resolved'];
+        get(reportPath(reportId)).data.reportedUserId == uid &&
+        get(reportPath(reportId)).data.status
+          in ['pending', 'resolved'];
     }
 
-    // =====================================
-    // 1. USER PROFILES
-    // =====================================
+    // 2. User Profiles
 
     match /users/{userId} {
 
@@ -90,113 +74,185 @@ service cloud.firestore {
 
       allow list: if isAdmin();
 
-      // Users can edit own profile
-
       allow update: if isOwner(userId) &&
         isActive() &&
-        request.resource.data
-          .diff(resource.data)
+        request.resource.data.diff(resource.data)
           .affectedKeys()
-          .hasOnly([
-            'full_name',
-            'phone_number'
-          ]);
-
-      // Admin can manage normal user accounts
+          .hasOnly(['full_name', 'phone_number']);
 
       allow update: if isAdmin() &&
         request.auth.uid != userId &&
         resource.data.role == 'user' &&
-
-        request.resource.data
-          .diff(resource.data)
+        request.resource.data.diff(resource.data)
           .affectedKeys()
           .hasOnly(['account_status']) &&
-
-        request.resource.data.account_status in [
-          'active',
-          'banned',
-          'disabled'
-        ] &&
-
+        request.resource.data.account_status
+          in ['active', 'banned', 'disabled'] &&
         (
           !hasPendingDeletion(userId) ||
           request.resource.data.account_status == 'disabled'
         );
 
-      // Permanent deletion requires authorized review
-
       allow delete: if false;
 
-      // =====================================
-      // 2. SAVED ANIMALS
-      // =====================================
+      // 3. Saved Animals
 
       match /savedPosts/{postId} {
-
         allow read, create, update, delete:
           if isOwner(userId) && isActive();
       }
+
+      // 4. Donation Intent Records
+
+      match /donations/{donationId} {
+
+        allow create: if isOwner(userId) &&
+          isActive() &&
+          request.resource.data.keys().hasAll([
+            'amount',
+            'currency',
+            'status',
+            'created_at'
+          ]) &&
+          request.resource.data.keys().hasOnly([
+            'amount',
+            'currency',
+            'status',
+            'created_at'
+          ]) &&
+          request.resource.data.amount is int &&
+          request.resource.data.amount > 0 &&
+          request.resource.data.amount <= 1000000 &&
+          request.resource.data.currency == 'LKR' &&
+          request.resource.data.status == 'pending' &&
+          request.resource.data.created_at == request.time;
+
+        allow read: if
+          (isOwner(userId) && isActive()) || isAdmin();
+
+        allow update, delete: if false;
+      }
     }
 
-    // =====================================
-    // 3. ANIMAL POSTS
-    // =====================================
+    // 5. Animal Posts
 
     match /posts/{postId} {
 
       allow read: if isActive();
 
       allow create: if isActive() &&
-        request.resource.data.userId ==
-          request.auth.uid;
+        request.resource.data.userId == request.auth.uid;
 
       allow update: if isActive() &&
-        resource.data.userId ==
-          request.auth.uid &&
-        request.resource.data.userId ==
-          resource.data.userId;
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == resource.data.userId;
 
       allow delete: if isActive() &&
-        resource.data.userId ==
-          request.auth.uid;
+        resource.data.userId == request.auth.uid;
     }
 
-    // =====================================
-    // 4. ADOPTION APPLICATIONS
-    // =====================================
+    // 6. Adoption Applications
 
     match /adoption_applications/{applicationId} {
 
       allow create: if isActive() &&
-        request.resource.data.applicantId ==
-          request.auth.uid &&
+        request.resource.data.applicantId == request.auth.uid &&
         request.resource.data.status == 'Pending';
 
       allow read: if isActive() &&
         (
-          resource.data.applicantId ==
-            request.auth.uid ||
+          resource.data.applicantId == request.auth.uid ||
           isAdmin()
         );
 
       allow update: if isAdmin() &&
-        request.resource.data
-          .diff(resource.data)
-          .affectedKeys()
-          .hasOnly(['status']) &&
-        request.resource.data.status in [
-          'Pending',
-          'Approved',
-          'Rejected'
-        ];
+        request.resource.data.diff(resource.data)
+          .affectedKeys().hasOnly(['status']) &&
+        request.resource.data.status
+          in ['Pending', 'Approved', 'Rejected'];
 
       allow delete: if false;
     }
 
-    // =====================================
-    // 5. POST REPORTS
-    // =====================================
+    // 7. Tender Care Records
+
+    match /tender_records/{recordId} {
+
+      allow create: if isActive() &&
+
+        request.resource.data.keys().hasAll([
+          'postId',
+          'animalName',
+          'reporterId',
+          'caregiverId',
+          'careTypes',
+          'description',
+          'evidenceImageUrl',
+          'status',
+          'createdAt'
+        ]) &&
+
+        request.resource.data.keys().hasOnly([
+          'postId',
+          'animalName',
+          'reporterId',
+          'caregiverId',
+          'careTypes',
+          'description',
+          'evidenceImageUrl',
+          'status',
+          'createdAt'
+        ]) &&
+
+        request.resource.data.caregiverId == request.auth.uid &&
+
+        request.resource.data.postId is string &&
+        request.resource.data.postId.size() > 0 &&
+        request.resource.data.postId.size() <= 200 &&
+
+        exists(
+          /databases/$(database)/documents/posts/$(request.resource.data.postId)
+        ) &&
+
+        request.resource.data.animalName is string &&
+        request.resource.data.animalName.size() <= 150 &&
+
+        request.resource.data.reporterId is string &&
+        request.resource.data.reporterId.size() <= 200 &&
+
+        request.resource.data.careTypes is list &&
+        request.resource.data.careTypes.size() > 0 &&
+        request.resource.data.careTypes.size() <= 4 &&
+
+        request.resource.data.careTypes.hasOnly([
+          'Food',
+          'Water',
+          'Medical Assistance',
+          'Shelter'
+        ]) &&
+
+        request.resource.data.description is string &&
+        request.resource.data.description.size() > 0 &&
+        request.resource.data.description.size() <= 1000 &&
+
+        request.resource.data.evidenceImageUrl is string &&
+        request.resource.data.evidenceImageUrl.matches(
+          '^https://res\\.cloudinary\\.com/mdpqtvkq/image/upload/.*$'
+        ) &&
+
+        request.resource.data.status == 'Submitted' &&
+        request.resource.data.createdAt == request.time;
+
+      allow read: if isActive() &&
+        (
+          resource.data.caregiverId == request.auth.uid ||
+          isAdmin()
+        );
+
+      allow update, delete: if false;
+    }
+
+    // 8. Post Reports
 
     match /post_reports/{reportId} {
 
@@ -226,20 +282,28 @@ service cloud.firestore {
           'resolvedBy'
         ]) &&
 
-        request.resource.data.reporterId ==
-          request.auth.uid &&
+        request.resource.data.reporterId == request.auth.uid &&
 
         validReportedPost(
           request.resource.data.postId,
           request.resource.data.reportedUserId
         ) &&
 
-        request.resource.data.reason is string &&
-        request.resource.data.reason.size() > 0 &&
-        request.resource.data.reason.size() <= 200 &&
+        request.resource.data.reason in [
+          'Misleading animal information',
+          'Suspected scam',
+          'Inappropriate content',
+          'Animal welfare concern',
+          'Other'
+        ] &&
 
         request.resource.data.description is string &&
         request.resource.data.description.size() <= 1000 &&
+
+        (
+          request.resource.data.reason != 'Other' ||
+          request.resource.data.description.size() > 0
+        ) &&
 
         request.resource.data.status == 'pending' &&
         request.resource.data.createdAt == request.time &&
@@ -249,53 +313,35 @@ service cloud.firestore {
       allow get: if isAdmin() ||
         (
           isActive() &&
-          resource.data.reporterId ==
-            request.auth.uid
+          resource.data.reporterId == request.auth.uid
         );
 
       allow list: if isAdmin();
 
       allow update: if isAdmin() &&
-
         resource.data.status == 'pending' &&
-
-        request.resource.data
-          .diff(resource.data)
+        request.resource.data.diff(resource.data)
           .affectedKeys()
           .hasOnly([
             'status',
             'resolvedAt',
             'resolvedBy'
           ]) &&
-
-        request.resource.data.status in [
-          'resolved',
-          'dismissed'
-        ] &&
-
-        request.resource.data.resolvedBy ==
-          request.auth.uid &&
-
-        request.resource.data.resolvedAt ==
-          request.time;
+        request.resource.data.status
+          in ['resolved', 'dismissed'] &&
+        request.resource.data.resolvedBy == request.auth.uid &&
+        request.resource.data.resolvedAt == request.time;
 
       allow delete: if false;
     }
 
-    // =====================================
-    // 6. USER DELETION REQUESTS
-    // =====================================
+    // 9. User Deletion Requests
 
     match /deletion_requests/{userId} {
 
-      // Only active administrators can view requests
-
       allow get, list: if isAdmin();
 
-      // Only administrators can request deletion
-
       allow create: if isAdmin() &&
-
         request.auth.uid != userId &&
 
         request.resource.data.keys().hasAll([
@@ -317,21 +363,16 @@ service cloud.firestore {
         ]) &&
 
         request.resource.data.userId == userId &&
-
-        request.resource.data.requestedBy ==
-          request.auth.uid &&
+        request.resource.data.requestedBy == request.auth.uid &&
 
         request.resource.data.reason is string &&
         request.resource.data.reason.size() > 0 &&
         request.resource.data.reason.size() <= 500 &&
 
         request.resource.data.status == 'pending' &&
-
-        request.resource.data.createdAt ==
-          request.time &&
+        request.resource.data.createdAt == request.time &&
 
         exists(userPath(userId)) &&
-
         get(userPath(userId)).data.role == 'user' &&
 
         validDeletionReport(
@@ -339,20 +380,13 @@ service cloud.firestore {
           userId
         ) &&
 
-        // Account must be disabled in the transaction
-
         getAfter(userPath(userId))
           .data.account_status == 'disabled';
-
-      // Prevent modifying or removing audit records
-      // through the client application
 
       allow update, delete: if false;
     }
 
-    // =====================================
-    // 7. DEFAULT SECURITY
-    // =====================================
+    // 10. Default Security
 
     match /{document=**} {
       allow read, write: if false;
