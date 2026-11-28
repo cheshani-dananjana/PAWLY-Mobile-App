@@ -38,7 +38,6 @@ class _SignupScreenState extends State<SignupScreen>
 
   static const Color burntOrange = Color(0xFFBF5700);
   static const Color brightOrange = Color(0xFFD96B12);
-  static const Color deepOrange = Color(0xFF9E4000);
 
   static const Color chocolateBrown = Color(0xFF4A2915);
   static const Color darkBrown = Color(0xFF251605);
@@ -245,7 +244,7 @@ class _SignupScreenState extends State<SignupScreen>
           ),
           boxShadow: [
             BoxShadow(
-              color: chocolateBrown.withOpacity(0.24),
+              color: chocolateBrown.withValues(alpha: 0.24),
               blurRadius: 18,
               offset: const Offset(0, 6),
             ),
@@ -298,7 +297,7 @@ class _SignupScreenState extends State<SignupScreen>
             border: Border.all(color: borderPeach, width: 1.1),
             boxShadow: [
               BoxShadow(
-                color: chocolateBrown.withOpacity(0.045),
+                color: chocolateBrown.withValues(alpha: 0.045),
                 blurRadius: 7,
                 offset: const Offset(0, 2),
               ),
@@ -316,7 +315,7 @@ class _SignupScreenState extends State<SignupScreen>
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
-                color: darkBrown.withOpacity(0.38),
+                color: darkBrown.withValues(alpha: 0.38),
                 fontSize: 13,
               ),
               prefixIcon: Icon(icon, color: chocolateBrown, size: 20),
@@ -330,7 +329,7 @@ class _SignupScreenState extends State<SignupScreen>
                         obscureText
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: chocolateBrown.withOpacity(0.65),
+                        color: chocolateBrown.withValues(alpha: 0.65),
                         size: 19,
                       ),
                     )
@@ -370,7 +369,7 @@ class _SignupScreenState extends State<SignupScreen>
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: chocolateBrown.withOpacity(0.24),
+              color: chocolateBrown.withValues(alpha: 0.24),
               blurRadius: 12,
               offset: const Offset(0, 5),
             ),
@@ -438,7 +437,7 @@ class _SignupScreenState extends State<SignupScreen>
         border: Border.all(color: borderPeach, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: chocolateBrown.withOpacity(0.11),
+            color: chocolateBrown.withValues(alpha: 0.11),
             blurRadius: 22,
             offset: const Offset(0, 9),
           ),
@@ -466,7 +465,7 @@ class _SignupScreenState extends State<SignupScreen>
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
-                color: darkBrown.withOpacity(0.65),
+                color: darkBrown.withValues(alpha: 0.65),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -555,7 +554,7 @@ class _SignupScreenState extends State<SignupScreen>
                   "OR",
                   style: TextStyle(
                     fontSize: 11,
-                    color: chocolateBrown.withOpacity(0.65),
+                    color: chocolateBrown.withValues(alpha: 0.65),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -575,7 +574,7 @@ class _SignupScreenState extends State<SignupScreen>
                   "Already have an account? ",
                   style: TextStyle(
                     fontSize: 13,
-                    color: darkBrown.withOpacity(0.75),
+                    color: darkBrown.withValues(alpha: 0.75),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -645,7 +644,7 @@ class _SignupScreenState extends State<SignupScreen>
               width: 230,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: burntOrange.withOpacity(0.10),
+                color: burntOrange.withValues(alpha: 0.10),
               ),
             ),
           ),
@@ -658,7 +657,7 @@ class _SignupScreenState extends State<SignupScreen>
               width: 160,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: brightOrange.withOpacity(0.055),
+                color: brightOrange.withValues(alpha: 0.055),
               ),
             ),
           ),
@@ -671,7 +670,7 @@ class _SignupScreenState extends State<SignupScreen>
               width: 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: chocolateBrown.withOpacity(0.045),
+                color: chocolateBrown.withValues(alpha: 0.045),
               ),
             ),
           ),
@@ -683,7 +682,7 @@ class _SignupScreenState extends State<SignupScreen>
             child: _animatedPaw(
               size: 39,
               rotation: -0.35,
-              color: chocolateBrown.withOpacity(0.23),
+              color: chocolateBrown.withValues(alpha: 0.23),
               phase: 0,
             ),
           ),
@@ -694,7 +693,7 @@ class _SignupScreenState extends State<SignupScreen>
             child: _animatedPaw(
               size: 48,
               rotation: 0.35,
-              color: burntOrange.withOpacity(0.25),
+              color: burntOrange.withValues(alpha: 0.25),
               phase: 1.2,
             ),
           ),
@@ -705,7 +704,7 @@ class _SignupScreenState extends State<SignupScreen>
             child: _animatedPaw(
               size: 23,
               rotation: 0.25,
-              color: chocolateBrown.withOpacity(0.15),
+              color: chocolateBrown.withValues(alpha: 0.15),
               phase: 2.1,
             ),
           ),
@@ -716,7 +715,7 @@ class _SignupScreenState extends State<SignupScreen>
             child: _animatedPaw(
               size: 27,
               rotation: -0.3,
-              color: burntOrange.withOpacity(0.19),
+              color: burntOrange.withValues(alpha: 0.19),
               phase: 3.2,
             ),
           ),
@@ -727,7 +726,7 @@ class _SignupScreenState extends State<SignupScreen>
             child: _animatedPaw(
               size: 34,
               rotation: 0.4,
-              color: deepBrown.withOpacity(0.17),
+              color: deepBrown.withValues(alpha: 0.17),
               phase: 2.7,
             ),
           ),
@@ -738,7 +737,7 @@ class _SignupScreenState extends State<SignupScreen>
             child: _animatedPaw(
               size: 40,
               rotation: -0.3,
-              color: burntOrange.withOpacity(0.20),
+              color: burntOrange.withValues(alpha: 0.20),
               phase: 4.1,
             ),
           ),
@@ -749,7 +748,7 @@ class _SignupScreenState extends State<SignupScreen>
             child: _animatedPaw(
               size: 22,
               rotation: -0.4,
-              color: chocolateBrown.withOpacity(0.15),
+              color: chocolateBrown.withValues(alpha: 0.15),
               phase: 5.0,
             ),
           ),
@@ -760,7 +759,7 @@ class _SignupScreenState extends State<SignupScreen>
             child: _animatedPaw(
               size: 25,
               rotation: 0.3,
-              color: deepBrown.withOpacity(0.16),
+              color: deepBrown.withValues(alpha: 0.16),
               phase: 0.8,
             ),
           ),
@@ -771,7 +770,7 @@ class _SignupScreenState extends State<SignupScreen>
             child: _animatedPaw(
               size: 35,
               rotation: 0.25,
-              color: chocolateBrown.withOpacity(0.20),
+              color: chocolateBrown.withValues(alpha: 0.20),
               phase: 3.8,
             ),
           ),
@@ -782,7 +781,7 @@ class _SignupScreenState extends State<SignupScreen>
             child: _animatedPaw(
               size: 28,
               rotation: -0.25,
-              color: burntOrange.withOpacity(0.19),
+              color: burntOrange.withValues(alpha: 0.19),
               phase: 1.8,
             ),
           ),
@@ -793,7 +792,7 @@ class _SignupScreenState extends State<SignupScreen>
             child: _animatedPaw(
               size: 23,
               rotation: 0.3,
-              color: deepBrown.withOpacity(0.17),
+              color: deepBrown.withValues(alpha: 0.17),
               phase: 4.7,
             ),
           ),
@@ -804,7 +803,7 @@ class _SignupScreenState extends State<SignupScreen>
             child: _animatedPaw(
               size: 22,
               rotation: -0.2,
-              color: burntOrange.withOpacity(0.15),
+              color: burntOrange.withValues(alpha: 0.15),
               phase: 2.4,
             ),
           ),
@@ -894,7 +893,7 @@ class _SignupScreenState extends State<SignupScreen>
                                     Text(
                                       "Made with love for every pet",
                                       style: TextStyle(
-                                        color: deepBrown.withOpacity(0.8),
+                                        color: deepBrown.withValues(alpha: 0.8),
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: 0.2,

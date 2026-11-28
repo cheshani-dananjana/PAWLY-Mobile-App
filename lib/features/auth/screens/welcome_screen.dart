@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -443,7 +443,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           fontSize: descriptionSize,
                           fontWeight: FontWeight.w600,
                           height: 1.3,
-                          color: warmCream.withOpacity(0.82),
+                          color: warmCream.withValues(alpha: 0.82),
                         ),
                       ),
                     ],
@@ -541,7 +541,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                               boxShadow: [
                                                 BoxShadow(
                                                   color: Colors.black
-                                                      .withOpacity(0.30),
+                                                      .withValues(alpha: 0.30),
                                                   blurRadius: 14,
                                                   offset: const Offset(0, 7),
                                                 ),
@@ -591,14 +591,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                                                 .bottomCenter,
                                                             colors: [
                                                               Colors.black
-                                                                  .withOpacity(
-                                                                    0.08,
+                                                                  .withValues(
+                                                                    alpha: 0.08,
                                                                   ),
                                                               Colors
                                                                   .transparent,
                                                               darkBrown
-                                                                  .withOpacity(
-                                                                    0.48,
+                                                                  .withValues(
+                                                                    alpha: 0.48,
                                                                   ),
                                                             ],
                                                           ),
@@ -644,7 +644,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                     : null,
                                 color: selected
                                     ? null
-                                    : warmCream.withOpacity(0.3),
+                                    : warmCream.withValues(alpha: 0.3),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             );
@@ -686,8 +686,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           ),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: warmCream.withOpacity(
-                              0.65,
+                            color: warmCream.withValues(
+                              alpha: 0.65,
                             ), // Bright outline for visibility
                             width: 1.5,
                           ),
@@ -733,7 +733,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             child: Text(
                               'Already have an account? ',
                               style: GoogleFonts.nunito(
-                                color: warmCream.withOpacity(0.82),
+                                color: warmCream.withValues(alpha: 0.82),
                                 fontSize: veryCompact ? 12 : 14,
                                 fontWeight: FontWeight.w600,
                               ),

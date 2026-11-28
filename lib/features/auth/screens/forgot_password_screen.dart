@@ -320,7 +320,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               child: _animatedPaw(
                 size: 45,
                 rotation: 0.3,
-                color: burntOrange.withOpacity(0.22),
+                color: burntOrange.withValues(alpha: 0.22),
                 phase: 1.0,
               ),
             ),
@@ -330,7 +330,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               child: _animatedPaw(
                 size: 38,
                 rotation: -0.3,
-                color: chocolateBrown.withOpacity(0.20),
+                color: chocolateBrown.withValues(alpha: 0.20),
                 phase: 2.5,
               ),
             ),
@@ -343,7 +343,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                       child: _animatedPaw(
                         size: 29,
                         rotation: -0.46,
-                        color: burntOrange.withOpacity(0.16),
+                        color: burntOrange.withValues(alpha: 0.16),
                         phase: 0.2,
                       ),
                     ),
@@ -352,7 +352,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                       child: _animatedPaw(
                         size: 34,
                         rotation: 0.42,
-                        color: chocolateBrown.withOpacity(0.14),
+                        color: chocolateBrown.withValues(alpha: 0.14),
                         phase: 3.7,
                       ),
                     ),
@@ -361,7 +361,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                       child: _animatedPaw(
                         size: 34,
                         rotation: 0.38,
-                        color: burntOrange.withOpacity(0.18),
+                        color: burntOrange.withValues(alpha: 0.18),
                         phase: 5.1,
                       ),
                     ),
@@ -370,7 +370,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                       child: _animatedPaw(
                         size: 24,
                         rotation: 0.28,
-                        color: chocolateBrown.withOpacity(0.13),
+                        color: chocolateBrown.withValues(alpha: 0.13),
                         phase: 2.0,
                       ),
                     ),
@@ -379,7 +379,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                       child: _animatedPaw(
                         size: 27,
                         rotation: -0.32,
-                        color: burntOrange.withOpacity(0.14),
+                        color: burntOrange.withValues(alpha: 0.14),
                         phase: 4.6,
                       ),
                     ),
@@ -388,7 +388,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                       child: _animatedPaw(
                         size: 25,
                         rotation: -0.36,
-                        color: burntOrange.withOpacity(0.12),
+                        color: burntOrange.withValues(alpha: 0.12),
                         phase: 1.6,
                       ),
                     ),
@@ -397,7 +397,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                       child: _animatedPaw(
                         size: 26,
                         rotation: -0.23,
-                        color: chocolateBrown.withOpacity(0.15),
+                        color: chocolateBrown.withValues(alpha: 0.15),
                         phase: 3.2,
                       ),
                     ),
@@ -406,7 +406,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                       child: _animatedPaw(
                         size: 30,
                         rotation: 0.35,
-                        color: burntOrange.withOpacity(0.17),
+                        color: burntOrange.withValues(alpha: 0.17),
                         phase: 5.8,
                       ),
                     ),
@@ -478,7 +478,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: darkBrown.withOpacity(0.75),
+                                      color: darkBrown.withValues(alpha: 0.75),
                                       fontWeight: FontWeight.w600,
                                       height: 1.4,
                                     ),
@@ -505,7 +505,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: chocolateBrown.withOpacity(0.1),
+                                        color: chocolateBrown.withValues(alpha: 0.1),
                                         blurRadius: 24,
                                         offset: const Offset(0, 10),
                                       ),
@@ -593,7 +593,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                                                   hintStyle: TextStyle(
                                                     fontSize: 13,
                                                     color: darkBrown
-                                                        .withOpacity(0.45),
+                                                        .withValues(alpha: 0.45),
                                                   ),
                                                   prefixIcon: const Icon(
                                                     Icons.email_outlined,
@@ -660,7 +660,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                                                       boxShadow: [
                                                         BoxShadow(
                                                           color: chocolateBrown
-                                                              .withOpacity(0.2),
+                                                              .withValues(alpha: 0.2),
                                                           blurRadius: 12,
                                                           offset: const Offset(
                                                             0,
