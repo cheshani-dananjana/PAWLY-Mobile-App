@@ -11,6 +11,7 @@ import '../animals/create_post_screen.dart';
 import '../map/map_screen.dart';
 import '../profile/profile_screen.dart';
 import '../animals/animal_details_screen.dart';
+import '../profile/notifications_screen.dart';
 
 // =============================================================================
 // DESIGN TOKENS
@@ -721,7 +722,11 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
           shadowColor: PawlyColors.burntOrange.withValues(alpha: 0.25),
           child: InkWell(
             customBorder: const CircleBorder(),
-            onTap: () {},
+            onTap: () {  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => const NotificationsScreen(),
+    ),
+  );},
             child: const Padding(
               padding: EdgeInsets.all(10),
               child: Icon(
