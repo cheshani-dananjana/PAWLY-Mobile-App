@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -9,14 +8,12 @@ import 'edit_post_screen.dart';
 class MyPostsScreen extends StatelessWidget {
   const MyPostsScreen({super.key});
 
+  static const Color _background = Color(0xFFFBE8BC);
   static const Color _cream = Color(0xFFFDF8ED);
   static const Color _orange = Color(0xFFBF5700);
-  static const Color _dark = Color(0xFF251605);
+  static const Color _dark = Color(0xFF49270F);
 
-  Future<void> _deletePost(
-    BuildContext context,
-    String postId,
-  ) async {
+  Future<void> _deletePost(BuildContext context, String postId) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -29,16 +26,12 @@ class MyPostsScreen extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, false),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],
@@ -52,10 +45,7 @@ class MyPostsScreen extends StatelessWidget {
 
     try {
       // Firestore rules must also check post ownership.
-      await FirebaseFirestore.instance
-          .collection('posts')
-          .doc(postId)
-          .delete();
+      await FirebaseFirestore.instance.collection('posts').doc(postId).delete();
 
       // Remove this user's saved bookmark, if present.
       try {
@@ -72,36 +62,25 @@ class MyPostsScreen extends StatelessWidget {
       if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Post deleted successfully.'),
-        ),
+        const SnackBar(content: Text('Post deleted successfully.')),
       );
     } catch (error) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Could not delete post: $error'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not delete post: $error')));
     }
   }
 
-  Future<void> _editPost(
-    BuildContext context,
-    String postId,
-  ) async {
+  Future<void> _editPost(BuildContext context, String postId) async {
     final updated = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => EditPostScreen(postId: postId),
-      ),
+      MaterialPageRoute(builder: (_) => EditPostScreen(postId: postId)),
     );
 
     if (updated == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Post updated successfully.'),
-        ),
+        const SnackBar(content: Text('Post updated successfully.')),
       );
     }
   }
@@ -111,21 +90,18 @@ class MyPostsScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: _cream,
+      backgroundColor: _background,
       appBar: AppBar(
         title: const Text(
           'My Posts',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: _cream,
+        backgroundColor: _background,
         foregroundColor: _dark,
       ),
       body: user == null
-          ? const Center(
-              child: Text('Please log in to view your posts.'),
-            )
-          : StreamBuilder<
-              QuerySnapshot<Map<String, dynamic>>>(
+          ? const Center(child: Text('Please log in to view your posts.'))
+          : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: FirebaseFirestore.instance
                   .collection('posts')
                   .where('userId', isEqualTo: user.uid)
@@ -135,18 +111,14 @@ class MyPostsScreen extends StatelessWidget {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'Unable to load posts: ${snapshot.error}',
-                      ),
+                      child: Text('Unable to load posts: ${snapshot.error}'),
                     ),
                   );
                 }
 
                 if (!snapshot.hasData) {
                   return const Center(
-                    child: CircularProgressIndicator(
-                      color: _orange,
-                    ),
+                    child: CircularProgressIndicator(color: _orange),
                   );
                 }
 
@@ -173,27 +145,17 @@ class MyPostsScreen extends StatelessWidget {
                     child: Padding(
                       padding: EdgeInsets.all(24),
                       child: Column(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.pets_rounded,
-                            size: 60,
-                            color: _orange,
-                          ),
+                          Icon(Icons.pets_rounded, size: 60, color: _orange),
                           SizedBox(height: 14),
                           Text(
                             "You haven't created any posts yet.",
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: _dark,
-                            ),
+                            style: TextStyle(fontSize: 18, color: _dark),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            'Use the Post tab to help an animal.',
-                          ),
+                          Text('Use the Post tab to help an animal.'),
                         ],
                       ),
                     ),
@@ -207,47 +169,38 @@ class MyPostsScreen extends StatelessWidget {
                     final post = posts[index];
                     final data = post.data();
 
-                    final name =
-                        (data['animalName'] as String?)
-                            ?.trim();
+                    final name = (data['animalName'] as String?)?.trim();
 
-                    final imageUrl =
-                        (data['imageUrl'] as String?) ?? '';
+                    final imageUrl = (data['imageUrl'] as String?) ?? '';
 
-                    final type =
-                        (data['postType'] as String?) ?? 'Stray';
+                    final type = (data['postType'] as String?) ?? 'Stray';
 
                     final location =
-                        (data['location'] as String?) ??
-                            'Unknown location';
+                        (data['location'] as String?) ?? 'Unknown location';
 
                     return Card(
-                      margin: const EdgeInsets.only(
-                        bottom: 14,
-                      ),
-                      color: Colors.white,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      color: _cream,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(18),
+                        side: const BorderSide(color: Color(0xFFE2B780)),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
                                 ClipRRect(
-                                  borderRadius:
-                                      BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(12),
                                   child: SizedBox(
                                     width: 92,
                                     height: 92,
                                     child: imageUrl.isEmpty
                                         ? const ColoredBox(
-                                            color: Color(0xFFF7DCA7),
+                                            color: Color(0xFFF8E2BC),
                                             child: Icon(
                                               Icons.pets,
                                               color: _orange,
@@ -256,12 +209,11 @@ class MyPostsScreen extends StatelessWidget {
                                         : Image.network(
                                             imageUrl,
                                             fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (_, error, stack) =>
-                                                    const Icon(
-                                              Icons.pets,
-                                              color: _orange,
-                                            ),
+                                            errorBuilder: (_, error, stack) =>
+                                                const Icon(
+                                                  Icons.pets,
+                                                  color: _orange,
+                                                ),
                                           ),
                                   ),
                                 ),
@@ -284,23 +236,23 @@ class MyPostsScreen extends StatelessWidget {
                                       const SizedBox(height: 6),
                                       Text(
                                         type,
-                                        style: const TextStyle(
-                                          color: _orange,
-                                        ),
+                                        style: const TextStyle(color: _orange),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         location,
+                                        style: const TextStyle(
+                                          color: Color(0xFF80654F),
+                                        ),
                                         maxLines: 2,
-                                        overflow:
-                                            TextOverflow.ellipsis,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
                                   ),
                                 ),
                               ],
                             ),
-                            const Divider(height: 20),
+                            const Divider(height: 20, color: Color(0xFFE2B780)),
                             Wrap(
                               spacing: 4,
                               children: [
@@ -308,27 +260,21 @@ class MyPostsScreen extends StatelessWidget {
                                   onPressed: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (_) =>
-                                            AnimalDetailsScreen(
+                                        builder: (_) => AnimalDetailsScreen(
                                           postId: post.id,
                                         ),
                                       ),
                                     );
                                   },
-                                  icon: const Icon(
-                                    Icons.visibility_outlined,
-                                  ),
+                                  icon: const Icon(Icons.visibility_outlined),
                                   label: const Text('View'),
                                   style: TextButton.styleFrom(
                                     foregroundColor: _dark,
                                   ),
                                 ),
                                 TextButton.icon(
-                                  onPressed: () =>
-                                      _editPost(context, post.id),
-                                  icon: const Icon(
-                                    Icons.edit_outlined,
-                                  ),
+                                  onPressed: () => _editPost(context, post.id),
+                                  icon: const Icon(Icons.edit_outlined),
                                   label: const Text('Edit'),
                                   style: TextButton.styleFrom(
                                     foregroundColor: _orange,
@@ -337,13 +283,10 @@ class MyPostsScreen extends StatelessWidget {
                                 TextButton.icon(
                                   onPressed: () =>
                                       _deletePost(context, post.id),
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                  ),
+                                  icon: const Icon(Icons.delete_outline),
                                   label: const Text('Delete'),
                                   style: TextButton.styleFrom(
-                                    foregroundColor:
-                                        Colors.red.shade700,
+                                    foregroundColor: Colors.red.shade700,
                                   ),
                                 ),
                               ],

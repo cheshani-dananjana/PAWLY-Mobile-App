@@ -6,6 +6,7 @@ import '../auth/services/auth_service.dart';
 import '../adoption/my_applications_screen.dart';
 import '../animals/my_posts_screen.dart';
 import '../auth/screens/change_password_screen.dart';
+import 'notifications_screen.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -27,8 +28,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _phone = '';
   String _email = '';
   bool _loaded = false;
-  bool _pushNotifications = true;
-  bool _emailAlerts = true;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileSub;
 
   @override
@@ -166,65 +165,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _openSavedAnimals() => widget.onOpenSaved();
 
-  // 3. Notifications Modal
+  // 3. In-app adoption updates
   void _openNotifications() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFFFDF8ED),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Notification Preferences',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF251605),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SwitchListTile(
-                title: const Text(
-                  'Push Notifications',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: const Text(
-                  'Receive alerts when new animals are posted nearby',
-                ),
-                value: _pushNotifications,
-                activeThumbColor: const Color(0xFFBF5700),
-                onChanged: (val) {
-                  setModalState(() => _pushNotifications = val);
-                  setState(() => _pushNotifications = val);
-                },
-              ),
-              SwitchListTile(
-                title: const Text(
-                  'Email Alerts',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: const Text(
-                  'Receive weekly digest of adopted and stray pets',
-                ),
-                value: _emailAlerts,
-                activeThumbColor: const Color(0xFFBF5700),
-                onChanged: (val) {
-                  setModalState(() => _emailAlerts = val);
-                  setState(() => _emailAlerts = val);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
   }
 
   // 4. Privacy & Security Modal
@@ -260,18 +204,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onTap: () {
                 Navigator.pop(context, true);
               },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.delete_forever, color: Colors.red),
-              title: const Text(
-                'Delete Account',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.red,
-                ),
-              ),
-              onTap: () {},
             ),
           ],
         ),
@@ -703,7 +635,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _tile(
                     Icons.notifications_active_outlined,
                     'Notifications',
-                    'Manage alerts',
+                    'Adoption updates',
                     _openNotifications,
                     reduce,
                     tileHeight,

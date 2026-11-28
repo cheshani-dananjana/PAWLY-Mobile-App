@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'adoption_service.dart';
+import 'post_availability.dart';
 
 class MyApplicationsScreen extends StatelessWidget {
   const MyApplicationsScreen({super.key});
 
-  static const Color bgColor = Color(0xFFFCECD7);
-  static const Color primaryOrange = Color(0xFFD46211);
-  static const Color textDark = Color(0xFF26160C);
+  static const Color bgColor = Color(0xFFFBE8BC);
+  static const Color primaryOrange = Color(0xFFBF5700);
+  static const Color textDark = Color(0xFF49270F);
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -59,7 +60,7 @@ class MyApplicationsScreen extends StatelessWidget {
               child: Text(
                 'You have not submitted any applications yet.',
                 style: TextStyle(
-                  color: Color(0xFF8A6A53),
+                  color: Color(0xFF80654F),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -76,78 +77,97 @@ class MyApplicationsScreen extends StatelessWidget {
               final type = data['applicationType'] ?? 'Adoption';
               final housing = data['housingType'] ?? 'Not specified';
 
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFDEFD9),
-                        borderRadius: BorderRadius.circular(12),
+              return PostAvailability(
+                key: ValueKey(docs[index].id),
+                petId: data['petId'],
+                builder: (context, availability) => Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFDF8ED),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFE2B780)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF49270F).withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
-                      child: const Icon(
-                        Icons.pets,
-                        color: primaryOrange,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '$petName ($type)',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: textDark,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Housing: $housing',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.brown.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _getStatusColor(status).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        status,
-                        style: TextStyle(
-                          color: _getStatusColor(status),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                    ],
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8E2BC),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.pets,
+                          color: primaryOrange,
+                          size: 24,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$petName ($type)',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: textDark,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Housing: $housing',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: const Color(0xFF80654F),
+                              ),
+                            ),
+                            if (availability != null) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                availability == 'Post Removed'
+                                    ? 'Post Removed: This animal post is no longer available.'
+                                    : availability,
+                                style: const TextStyle(
+                                  color: Color(0xFF80654F),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(status)
+                              .withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          status,
+                          style: TextStyle(
+                            color: _getStatusColor(status),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
