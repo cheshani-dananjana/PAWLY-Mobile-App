@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:pawly/features/auth/screens/login_screen.dart';
+import '../animals/my_posts_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.onOpenSaved});
@@ -442,6 +443,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: _openSavedAnimals,
                   ),
 
+_buildProfileCard(
+  icon: Icons.article_outlined,
+  title: 'My Posts',
+  subtitle: 'View, edit or delete your animal posts',
+  onTap: () {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const MyPostsScreen(),
+      ),
+    );
+  },
+),
+
+
                   _buildProfileCard(
                     icon: Icons.assignment_outlined,
                     title: 'My Applications',
@@ -454,7 +469,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
-                  
+
                   _buildProfileCard(
                     icon: Icons.notifications_active_outlined,
                     title: 'Notifications',
