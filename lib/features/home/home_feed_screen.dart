@@ -130,7 +130,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   Object? _savedError;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _savedSubscription;
   final Map<String, Stream<DocumentSnapshot<Map<String, dynamic>>>>
-      _savedPostStreams = {};
+  _savedPostStreams = {};
 
   late Stream<QuerySnapshot> _postsStream = _buildPostsStream();
 
@@ -227,9 +227,9 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     if (alreadySaved) return;
 
     try {
-      await _savedCollection(user.uid).doc(id).set({
-        'savedAt': FieldValue.serverTimestamp(),
-      });
+      await _savedCollection(user.uid)
+          .doc(id)
+          .set({'savedAt': FieldValue.serverTimestamp()});
     } catch (error) {
       if (!mounted) return;
       setState(() => _savedPostIds.remove(id));
@@ -258,8 +258,8 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
           final index = previousIndex < 0
               ? _savedPostIds.length
               : previousIndex > _savedPostIds.length
-                  ? _savedPostIds.length
-                  : previousIndex;
+              ? _savedPostIds.length
+              : previousIndex;
           _savedPostIds.insert(index, id);
         }
       });
@@ -301,12 +301,10 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   }
 
   void _openPost(String id, Map<String, dynamic> data) {
-  Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => AnimalDetailsScreen(postId: id),
-    ),
-  );
-}
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => AnimalDetailsScreen(postId: id)));
+  }
 
   bool _matchesSearch(Map<String, dynamic> data) {
     final q = _searchQuery.trim().toLowerCase();
@@ -376,7 +374,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 hasScrollBody: false,
                 child: _StatusMessage(
                   icon: Icons.cloud_off_rounded,
-                  title: 'Couldnâ€™t load the feed',
+                  title: 'Couldn’t load the feed',
                   message: 'Check your connection and try again.',
                   detail: '${snapshot.error}',
                 ),
@@ -449,7 +447,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // SAVED PAWS â€” bookmarked posts only, stored per signed-in Firebase user
+  // SAVED PAWS — bookmarked posts only, stored per signed-in Firebase user
   // ---------------------------------------------------------------------------
 
   Widget _buildSavedTab() {
@@ -468,7 +466,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     if (_savedError != null) {
       return _StatusMessage(
         icon: Icons.cloud_off_rounded,
-        title: 'Couldnâ€™t load saved paws',
+        title: 'Couldn’t load saved paws',
         message: 'Check your connection and Firestore permissions.',
         detail: '$_savedError',
       );
@@ -525,7 +523,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return _SavedPostNotice(
-                      message: 'Couldnâ€™t load this post.',
+                      message: 'Couldn’t load this post.',
                       onRemove: () => _removeSavedPost(id),
                     );
                   }
@@ -1019,13 +1017,13 @@ class _FilterChipButtonState extends State<_FilterChipButton> {
 }
 
 // =============================================================================
-// POST CARD â€” "Gallery Print"
+// POST CARD — "Gallery Print"
 // =============================================================================
 
 class _PostCard extends StatefulWidget {
   const _PostCard({
-  super.key,
-  required this.data,
+    super.key,
+    required this.data,
     required this.isLiked,
     required this.onLike,
     required this.isSaved,
@@ -1253,8 +1251,8 @@ class _PostCardState extends State<_PostCard> {
                             actionLabel: widget.removeFromSaved
                                 ? 'Remove from Saved Paws'
                                 : widget.isSaved
-                                    ? 'Open Saved Paws'
-                                    : 'Save and open Saved Paws',
+                                ? 'Open Saved Paws'
+                                : 'Save and open Saved Paws',
                           ),
                         ],
                       ),
@@ -1283,7 +1281,7 @@ class _PostCardState extends State<_PostCard> {
   }
 }
 
-/// Category pill with a tiny "collar ring" â€” PAWLY's signature detail.
+/// Category pill with a tiny "collar ring" — PAWLY's signature detail.
 class _CategoryTag extends StatelessWidget {
   const _CategoryTag({required this.label, required this.style});
 
@@ -1401,7 +1399,7 @@ class _InfoStrip extends StatelessWidget {
                 if (hasTime) ...[
                   if (hasLocation)
                     Text(
-                      '  Â·  ',
+                      '  ·  ',
                       style: PawlyText.sans(
                         size: 12.5,
                         color: PawlyColors.muted,
@@ -1640,7 +1638,7 @@ class _Sparkles extends StatelessWidget {
 }
 
 // =============================================================================
-// HEADER ILLUSTRATIONS (drawn in code â€” no asset files needed)
+// HEADER ILLUSTRATIONS (drawn in code — no asset files needed)
 // =============================================================================
 
 /// A small paw that waves once after the greeting appears.
@@ -1693,7 +1691,7 @@ class _WavingPawState extends State<_WavingPaw>
           PawlyColors.burntOrange,
           BlendMode.srcIn,
         ),
-        child: const Text('ðŸ¾', style: TextStyle(fontSize: 24)),
+        child: const Text('\u{1F43E}', style: TextStyle(fontSize: 24)),
       ),
     );
   }
@@ -2062,7 +2060,7 @@ class _PawLoaderState extends State<_PawLoader>
         ),
         const SizedBox(height: 14),
         Text(
-          'Finding little pawsâ€¦',
+          'Finding little paws…',
           style: PawlyText.sans(
             size: 13.5,
             weight: FontWeight.w500,
@@ -2240,10 +2238,7 @@ class _SavedPostNotice extends StatelessWidget {
               style: PawlyText.sans(size: 13, color: PawlyColors.muted),
             ),
           ),
-          TextButton(
-            onPressed: onRemove,
-            child: const Text('Remove'),
-          ),
+          TextButton(onPressed: onRemove, child: const Text('Remove')),
         ],
       ),
     );
@@ -2286,7 +2281,7 @@ class _PlaceholderTab extends StatelessWidget {
 }
 
 // =============================================================================
-// BOTTOM NAVIGATION (unchanged â€” also used by CreatePostScreen)
+// BOTTOM NAVIGATION (unchanged — also used by CreatePostScreen)
 // =============================================================================
 
 class PawlyBottomNav extends StatelessWidget {
