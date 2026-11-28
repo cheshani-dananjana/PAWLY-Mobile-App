@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -14,8 +16,12 @@ class _DeletionRequestsScreenState extends State<DeletionRequestsScreen> {
   final AdminService _service = AdminService();
 
   static const Color brown = Color(0xFF4A2915);
-  static const Color cream = Color(0xFFFFF7EC);
+  static const Color cream = Color(0xFFFCE8C9);
   static const Color orange = Color(0xFFBF5700);
+
+  static const Color cardCream = Color(0xFFFFF6E9);
+  static const Color peach = Color(0xFFF0C9AE);
+  static const Color muted = Color(0xFF805237);
 
   late Stream<QuerySnapshot<Map<String, dynamic>>> _stream;
 
@@ -32,15 +38,15 @@ class _DeletionRequestsScreenState extends State<DeletionRequestsScreen> {
   Color _statusColor(String status) {
     switch (status) {
       case 'pending':
-        return Colors.orange;
+        return const Color(0xFFA45100);
       case 'approved':
-        return Colors.blue;
+        return const Color(0xFF355D91);
       case 'completed':
-        return Colors.green;
+        return const Color(0xFF287044);
       case 'rejected':
-        return Colors.red;
+        return const Color(0xFFAA3636);
       default:
-        return Colors.grey;
+        return const Color(0xFF75665C);
     }
   }
 
@@ -65,6 +71,10 @@ class _DeletionRequestsScreenState extends State<DeletionRequestsScreen> {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
+          backgroundColor: cardCream,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: const Text('Reported User Details'),
           content: user == null
               ? const Text('User profile is no longer available.')
@@ -76,12 +86,8 @@ class _DeletionRequestsScreenState extends State<DeletionRequestsScreen> {
                       const Center(
                         child: CircleAvatar(
                           radius: 35,
-                          backgroundColor: brown,
-                          child: Icon(
-                            Icons.person,
-                            size: 40,
-                            color: Colors.white,
-                          ),
+                          backgroundColor: Color(0xFFF5D8B9),
+                          child: Icon(Icons.person, size: 40, color: brown),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -131,10 +137,15 @@ class _DeletionRequestsScreenState extends State<DeletionRequestsScreen> {
     final color = _statusColor(status);
 
     return Card(
-      color: Colors.white,
+      color: cardCream,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: brown.withValues(alpha: 0.15),
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 15),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: const BorderSide(color: peach),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -143,8 +154,8 @@ class _DeletionRequestsScreenState extends State<DeletionRequestsScreen> {
             Row(
               children: [
                 const CircleAvatar(
-                  backgroundColor: brown,
-                  child: Icon(Icons.delete_outline, color: Colors.white),
+                  backgroundColor: Color(0xFFF5D8B9),
+                  child: Icon(Icons.delete_outline, color: brown),
                 ),
                 const SizedBox(width: 10),
                 const Expanded(
@@ -178,7 +189,7 @@ class _DeletionRequestsScreenState extends State<DeletionRequestsScreen> {
               ],
             ),
 
-            const Divider(height: 25),
+            const Divider(height: 25, color: peach),
 
             Text(
               'Reason: $reason',
@@ -227,7 +238,14 @@ class _DeletionRequestsScreenState extends State<DeletionRequestsScreen> {
                 onPressed: userId.isEmpty ? null : () => _viewUser(userId),
                 icon: const Icon(Icons.person_search),
                 label: const Text('View Reported User'),
-                style: OutlinedButton.styleFrom(foregroundColor: brown),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: brown,
+                  side: const BorderSide(color: peach),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
               ),
             ),
 
@@ -271,8 +289,15 @@ class _DeletionRequestsScreenState extends State<DeletionRequestsScreen> {
 
       appBar: AppBar(
         title: const Text('Deletion Requests'),
-        backgroundColor: brown,
-        foregroundColor: Colors.white,
+        backgroundColor: cream,
+        foregroundColor: brown,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        titleTextStyle: const TextStyle(
+          color: brown,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+        ),
         actions: [
           IconButton(
             tooltip: 'Refresh',
@@ -286,145 +311,285 @@ class _DeletionRequestsScreenState extends State<DeletionRequestsScreen> {
         ],
       ),
 
-      body: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.all(12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: brown,
-              borderRadius: BorderRadius.circular(16),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [cream, Color(0xFFFFE9CC), Color(0xFFF4C7A0)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            const Positioned(top: 12, right: 18, child: _DeletionPaw(size: 46)),
+            const Positioned(
+              top: 260,
+              left: -8,
+              child: _DeletionPaw(size: 52, angle: -0.4, phase: 0.3),
             ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const Positioned(
+              bottom: 18,
+              right: 12,
+              child: _DeletionPaw(size: 70, angle: 0.5, phase: 0.6),
+            ),
+            Column(
               children: [
-                Text(
-                  'Account Deletion Management',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [cardCream, Color(0xFFF9D5AD)],
+                    ),
+                    border: Border.all(color: peach),
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Account Deletion Management',
+                        style: TextStyle(
+                          color: brown,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'View and track reported account '
+                        'deletion requests.',
+                        style: TextStyle(color: muted, fontSize: 13),
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(height: 8),
-                Text(
-                  'View and track reported account '
-                  'deletion requests.',
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
+
+                // FILTERS
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      for (final status in [
+                        'all',
+                        'pending',
+                        'approved',
+                        'completed',
+                        'rejected',
+                      ])
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(status.toUpperCase()),
+                            selected: _filter == status,
+                            selectedColor: const Color(0xFFF5C99C),
+                            backgroundColor: cardCream,
+                            side: const BorderSide(color: peach),
+                            labelStyle: const TextStyle(
+                              color: brown,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            checkmarkColor: brown,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            onSelected: (_) {
+                              setState(() {
+                                _filter = status;
+                              });
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: _stream,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        debugPrint(
+                          'DELETION REQUEST ERROR: '
+                          '${snapshot.error}',
+                        );
+
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 50,
+                              ),
+                              const SizedBox(height: 12),
+                              const Text('Unable to load deletion requests.'),
+                              const SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _stream = _service.getDeletionRequests();
+                                  });
+                                },
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      if (!snapshot.hasData ||
+                          snapshot.data!.metadata.isFromCache) {
+                        return const Center(
+                          child: CircularProgressIndicator(color: brown),
+                        );
+                      }
+
+                      final requests = snapshot.data!.docs.where((document) {
+                        if (_filter == 'all') {
+                          return true;
+                        }
+
+                        return document.data()['status'] == _filter;
+                      }).toList();
+
+                      if (requests.isEmpty) {
+                        return Center(
+                          child: _entrance(
+                            const Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircleAvatar(
+                                  radius: 42,
+                                  backgroundColor: cardCream,
+                                  child: Icon(
+                                    Icons.delete_outline,
+                                    size: 40,
+                                    color: brown,
+                                  ),
+                                ),
+                                SizedBox(height: 12),
+                                Text(
+                                  'No deletion requests found.',
+                                  style: TextStyle(
+                                    color: brown,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                SizedBox(height: 6),
+                                Text(
+                                  'Requests will appear here.',
+                                  style: TextStyle(color: muted),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(12),
+                        itemCount: requests.length,
+                        itemBuilder: (context, index) {
+                          return _entrance(
+                            _requestCard(requests[index]),
+                            key: ValueKey(requests[index].id),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _entrance(Widget child, {Key? key}) {
+    return TweenAnimationBuilder<double>(
+      key: key,
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: MediaQuery.of(context).disableAnimations
+          ? Duration.zero
+          : const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) => Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(0, 14 * (1 - value)),
+          child: child,
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _DeletionPaw extends StatefulWidget {
+  const _DeletionPaw({required this.size, this.angle = 0.25, this.phase = 0.0});
+  final double size, angle, phase;
+
+  @override
+  State<_DeletionPaw> createState() => _DeletionPawState();
+}
+
+class _DeletionPawState extends State<_DeletionPaw>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 4),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.stop();
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: AnimatedBuilder(
+          animation: _controller,
+          child: Icon(
+            Icons.pets,
+            size: widget.size,
+            color: const Color(0xFFC88A4D).withValues(alpha: 0.18),
           ),
-
-          // FILTERS
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                for (final status in [
-                  'all',
-                  'pending',
-                  'approved',
-                  'completed',
-                  'rejected',
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(status.toUpperCase()),
-                      selected: _filter == status,
-                      selectedColor: const Color(0xFFF4DFC5),
-                      onSelected: (_) {
-                        setState(() {
-                          _filter = status;
-                        });
-                      },
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          Expanded(
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _stream,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  debugPrint(
-                    'DELETION REQUEST ERROR: '
-                    '${snapshot.error}',
-                  );
-
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: Colors.red,
-                          size: 50,
-                        ),
-                        const SizedBox(height: 12),
-                        const Text('Unable to load deletion requests.'),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              _stream = _service.getDeletionRequests();
-                            });
-                          },
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                if (!snapshot.hasData || snapshot.data!.metadata.isFromCache) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: brown),
-                  );
-                }
-
-                final requests = snapshot.data!.docs.where((document) {
-                  if (_filter == 'all') {
-                    return true;
-                  }
-
-                  return document.data()['status'] == _filter;
-                }).toList();
-
-                if (requests.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.delete_outline, size: 65, color: brown),
-                        SizedBox(height: 12),
-                        Text(
-                          'No deletion requests found.',
-                          style: TextStyle(color: brown, fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: requests.length,
-                  itemBuilder: (context, index) {
-                    return _requestCard(requests[index]);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+          builder: (context, child) {
+            final wave = MediaQuery.of(context).disableAnimations
+                ? 0.0
+                : math.sin(2 * math.pi * (_controller.value + widget.phase));
+            return Transform.translate(
+              offset: Offset(0, 6 * wave),
+              child: Transform.rotate(
+                angle: widget.angle + .07 * wave,
+                child: child,
+              ),
+            );
+          },
+        ),
       ),
     );
   }
