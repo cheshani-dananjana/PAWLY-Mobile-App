@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 import 'features/auth/screens/splash_screen.dart';
-import 'features/auth/screens/account_gate.dart';
 import 'firebase_options.dart';
 
 const bool useEmulator = bool.fromEnvironment(
@@ -95,9 +94,9 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFF251605),
       ),
-      home: isSignedIn
-          ? const AccountGate()
-          : const SplashScreen(),
+      
+home: SplashScreen(isSignedIn: isSignedIn),
+
     );
   }
 }

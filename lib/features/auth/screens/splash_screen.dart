@@ -4,13 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'welcome_screen.dart';
+import 'account_gate.dart';
+
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  const SplashScreen({
+    super.key,
+    this.isSignedIn = false,
+  });
+
+  final bool isSignedIn;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
+
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
@@ -62,13 +70,19 @@ class _SplashScreenState extends State<SplashScreen>
 
     _introController.forward();
 
-    _timer = Timer(const Duration(seconds: 3), () {
-      if (!mounted) return;
+    
+_timer = Timer(const Duration(seconds: 3), () {
+  if (!mounted) return;
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(builder: (_) => const WelcomeScreen()),
-      );
-    });
+  Navigator.of(context).pushReplacement(
+    MaterialPageRoute<void>(
+      builder: (_) => widget.isSignedIn
+          ? const AccountGate()
+          : const WelcomeScreen(),
+    ),
+  );
+});
+
   }
 
   @override
