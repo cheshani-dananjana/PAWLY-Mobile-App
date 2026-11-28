@@ -453,8 +453,8 @@ class _MapScreenState extends State<MapScreen> {
                                     pet['latitude'] as double,
                                     pet['longitude'] as double,
                                   ),
-                                  width: 75,
-                                  height: 85,
+                                  width: 110,
+                                  height: 110,
                                   child: _buildAnimalMarker(pet),
                                 ),
                               if (_userLocation != null)
