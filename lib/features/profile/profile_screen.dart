@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth/services/auth_service.dart';
 import '../adoption/my_applications_screen.dart';
 import '../animals/my_posts_screen.dart';
+import '../auth/screens/change_password_screen.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -227,8 +228,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // 4. Privacy & Security Modal
-  void _openPrivacySecurity() {
-    showModalBottomSheet(
+  Future<void> _openPrivacySecurity() async {
+    final change = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: const Color(0xFFFDF8ED),
       shape: const RoundedRectangleBorder(
@@ -257,13 +258,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Password reset is not available from this screen yet.',
-                    ),
-                  ),
-                );
+                Navigator.pop(context, true);
               },
             ),
             const Divider(),
@@ -281,6 +276,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+    );
+    if (!mounted || change != true) return;
+    final updated = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+    );
+    if (!mounted || updated != true) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Password updated successfully.')),
     );
   }
 

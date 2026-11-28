@@ -146,6 +146,52 @@ class AuthService {
     }
   }
 
+  // Change the signed-in user's password after fresh verification.
+  Future<String?> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _auth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null) return 'Please log in again.';
+    if (currentPassword.isEmpty) return 'Enter your current password.';
+    if (newPassword.length < 8) return 'Use at least 8 characters.';
+    if (currentPassword == newPassword) return 'Choose a different password.';
+    try {
+      await user.reauthenticateWithCredential(
+        EmailAuthProvider.credential(email: email, password: currentPassword),
+      );
+      if (_auth.currentUser?.uid != user.uid) return 'Please log in again.';
+      final profile = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .get(const GetOptions(source: Source.server));
+      final data = profile.data();
+      if (data == null ||
+          data['account_status'] != 'active' ||
+          !['admin', 'user'].contains(data['role'])) {
+        return 'Account blocked or profile unavailable.';
+      }
+      if (_auth.currentUser?.uid != user.uid) return 'Please log in again.';
+      await user.updatePassword(newPassword);
+      return null;
+    } on FirebaseAuthException catch (e) {
+      if ([
+        'wrong-password',
+        'invalid-credential',
+        'invalid-login-credentials',
+      ].contains(e.code)) {
+        return 'Current password is incorrect.';
+      }
+      if (e.code == 'requires-recent-login') {
+        return 'Please log in again and retry.';
+      }
+      return _getAuthErrorMessage(e);
+    } catch (_) {
+      return 'Unable to change password. Please try again.';
+    }
+  }
+
   // Logout
   Future<void> logOut() async {
     await _auth.signOut();
