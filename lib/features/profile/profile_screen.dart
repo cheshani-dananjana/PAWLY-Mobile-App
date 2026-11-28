@@ -454,17 +454,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
-
-                  _buildProfileCard(
-                    icon: Icons.assignment_outlined,
-                    title: 'My Applications',
-                    subtitle: 'View your adoption applications',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const MyApplicationsScreen(),
-                      ),
-                    ),
-                  ),
+                  
                   _buildProfileCard(
                     icon: Icons.notifications_active_outlined,
                     title: 'Notifications',
