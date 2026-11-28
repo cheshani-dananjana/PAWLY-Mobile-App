@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -14,9 +16,13 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
   final AdminService _service = AdminService();
 
   static const Color brown = Color(0xFF4A2915);
-  static const Color cream = Color(0xFFFFF7EC);
+  static const Color cream = Color(0xFFFCE8C9);
   static const Color orange = Color(0xFFBF5700);
   static const Color darkRed = Color(0xFF8B0000);
+
+  static const Color cardCream = Color(0xFFFFF6E9);
+  static const Color peach = Color(0xFFF0C9AE);
+  static const Color muted = Color(0xFF805237);
 
   late Stream<QuerySnapshot<Map<String, dynamic>>> _stream;
 
@@ -36,13 +42,13 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
   Color _statusColor(String status) {
     switch (status) {
       case 'pending':
-        return Colors.orange;
+        return const Color(0xFFA45100);
 
       case 'resolved':
-        return Colors.green;
+        return const Color(0xFF287044);
 
       case 'dismissed':
-        return Colors.grey;
+        return const Color(0xFF75665C);
 
       default:
         return Colors.blueGrey;
@@ -63,6 +69,8 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: cardCream,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Text('Confirm Action'),
         content: Text(message),
         actions: [
@@ -127,6 +135,10 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
+          backgroundColor: cardCream,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: const Text('Reported User'),
           content: user == null
               ? const Text('User profile not found.')
@@ -225,10 +237,15 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
         : 'Unknown date';
 
     return Card(
-      color: Colors.white,
-      elevation: 2,
+      color: cardCream,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: brown.withValues(alpha: 0.16),
+      elevation: 3,
       margin: const EdgeInsets.only(bottom: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: const BorderSide(color: peach),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -239,8 +256,8 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
             Row(
               children: [
                 const CircleAvatar(
-                  backgroundColor: brown,
-                  child: Icon(Icons.flag, color: Colors.white),
+                  backgroundColor: Color(0xFFF5D8B9),
+                  child: Icon(Icons.flag, color: brown),
                 ),
                 const SizedBox(width: 10),
                 const Expanded(
@@ -253,17 +270,28 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
                     ),
                   ),
                 ),
-                Text(
-                  status.toUpperCase(),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _statusColor(status),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _statusColor(status).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    status.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: _statusColor(status),
+                    ),
                   ),
                 ),
               ],
             ),
 
-            const Divider(),
+            const Divider(color: peach),
 
             // REPORT DETAILS
             Text(
@@ -312,7 +340,7 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
 
             // PENDING REPORT ACTIONS
             if (status == 'pending') ...[
-              const Divider(),
+              const Divider(color: peach),
 
               Wrap(
                 spacing: 8,
@@ -330,8 +358,9 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
                     icon: const Icon(Icons.check_circle),
                     label: const Text('Resolve'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
+                      backgroundColor: const Color(0xFFE4EEDD),
+                      foregroundColor: const Color(0xFF287044),
+                      elevation: 0,
                     ),
                   ),
 
@@ -346,8 +375,9 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
                     icon: const Icon(Icons.close),
                     label: const Text('Dismiss'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey,
-                      foregroundColor: Colors.white,
+                      backgroundColor: const Color(0xFFECE4DB),
+                      foregroundColor: const Color(0xFF61544B),
+                      elevation: 0,
                     ),
                   ),
 
@@ -363,8 +393,9 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
                     icon: const Icon(Icons.block),
                     label: const Text('Ban User'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
+                      backgroundColor: const Color(0xFFF5DDDA),
+                      foregroundColor: const Color(0xFFAA3636),
+                      elevation: 0,
                     ),
                   ),
 
@@ -380,8 +411,9 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
                     icon: const Icon(Icons.person_off),
                     label: const Text('Disable User'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: orange,
-                      foregroundColor: Colors.white,
+                      backgroundColor: const Color(0xFFF9E3CA),
+                      foregroundColor: const Color(0xFFA45100),
+                      elevation: 0,
                     ),
                   ),
                 ],
@@ -403,8 +435,9 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
                   icon: const Icon(Icons.delete_forever),
                   label: const Text('Request Deletion'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: darkRed,
-                    foregroundColor: Colors.white,
+                    backgroundColor: const Color(0xFFF5DDDA),
+                    foregroundColor: darkRed,
+                    elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -437,8 +470,15 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
 
       appBar: AppBar(
         title: const Text('Manage Reports'),
-        backgroundColor: brown,
-        foregroundColor: Colors.white,
+        backgroundColor: cream,
+        foregroundColor: brown,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        titleTextStyle: const TextStyle(
+          color: brown,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+        ),
         actions: [
           IconButton(
             tooltip: 'Refresh Reports',
@@ -454,154 +494,289 @@ class _ManageReportsScreenState extends State<ManageReportsScreen> {
         ],
       ),
 
-      body: Column(
-        children: [
-          // REPORT STATUS FILTERS
-
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                for (final status in [
-                  'all',
-                  'pending',
-                  'resolved',
-                  'dismissed',
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(status.toUpperCase()),
-                      selected: _filter == status,
-                      selectedColor: const Color(0xFFF4DFC5),
-                      onSelected: (_) {
-                        setState(() {
-                          _filter = status;
-                        });
-                      },
-                    ),
-                  ),
-              ],
-            ),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [cream, Color(0xFFFFE9CC), Color(0xFFF4C7A0)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-
-          // LOADING INDICATOR
-          if (_busy) const LinearProgressIndicator(color: orange),
-
-          // FIRESTORE REPORT STREAM
-          Expanded(
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _stream,
-              builder: (context, snapshot) {
-                // ERROR HANDLING
-
-                if (snapshot.hasError) {
-                  debugPrint('REPORT ERROR: ${snapshot.error}');
-
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 55,
-                            color: Colors.red,
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          const Text(
-                            'Unable to load reports.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          const Text(
-                            'Check Firestore permissions '
-                            'and internet connection.',
-                            textAlign: TextAlign.center,
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              setState(() {
-                                _stream = _service.getReports();
-                              });
-                            },
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                // WAIT FOR SERVER DATA
-
-                if (!snapshot.hasData || snapshot.data!.metadata.isFromCache) {
-                  return const Center(
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            const Positioned(top: 12, right: 18, child: _ReportsPaw(size: 46)),
+            const Positioned(
+              top: 260,
+              left: -8,
+              child: _ReportsPaw(size: 52, angle: -0.4, phase: 0.3),
+            ),
+            const Positioned(
+              bottom: 18,
+              right: 12,
+              child: _ReportsPaw(size: 70, angle: 0.5, phase: 0.6),
+            ),
+            Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 2),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CircularProgressIndicator(color: brown),
-                        SizedBox(height: 12),
-                        Text('Connecting to Firestore...'),
-                      ],
-                    ),
-                  );
-                }
-
-                // FILTER REPORTS
-
-                final reports = snapshot.data!.docs.where((document) {
-                  if (_filter == 'all') {
-                    return true;
-                  }
-
-                  return document.data()['status'] == _filter;
-                }).toList();
-
-                // EMPTY STATE
-
-                if (reports.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.flag_outlined, size: 65, color: brown),
-
-                        SizedBox(height: 12),
-
                         Text(
-                          'No reports found.',
-                          style: TextStyle(color: brown, fontSize: 16),
+                          'Community safety',
+                          style: TextStyle(
+                            color: brown,
+                            fontSize: 23,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          'Review reports and keep every paw safe.',
+                          style: TextStyle(color: muted),
                         ),
                       ],
                     ),
-                  );
-                }
+                  ),
+                ),
+                // REPORT STATUS FILTERS
 
-                // DISPLAY REPORTS
-
-                return ListView.builder(
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.all(12),
-                  itemCount: reports.length,
-                  itemBuilder: (context, index) {
-                    return _reportCard(reports[index]);
-                  },
-                );
-              },
+                  child: Row(
+                    children: [
+                      for (final status in [
+                        'all',
+                        'pending',
+                        'resolved',
+                        'dismissed',
+                      ])
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(status.toUpperCase()),
+                            selected: _filter == status,
+                            selectedColor: const Color(0xFFF5C99C),
+                            backgroundColor: cardCream,
+                            side: const BorderSide(color: peach),
+                            labelStyle: const TextStyle(
+                              color: brown,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            checkmarkColor: brown,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            onSelected: (_) {
+                              setState(() {
+                                _filter = status;
+                              });
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                // LOADING INDICATOR
+                if (_busy) const LinearProgressIndicator(color: orange),
+
+                // FIRESTORE REPORT STREAM
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: _stream,
+                    builder: (context, snapshot) {
+                      // ERROR HANDLING
+
+                      if (snapshot.hasError) {
+                        debugPrint('REPORT ERROR: ${snapshot.error}');
+
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  size: 55,
+                                  color: Colors.red,
+                                ),
+
+                                const SizedBox(height: 12),
+
+                                const Text(
+                                  'Unable to load reports.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+
+                                const SizedBox(height: 8),
+
+                                const Text(
+                                  'Check Firestore permissions '
+                                  'and internet connection.',
+                                  textAlign: TextAlign.center,
+                                ),
+
+                                const SizedBox(height: 12),
+
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    setState(() {
+                                      _stream = _service.getReports();
+                                    });
+                                  },
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      // WAIT FOR SERVER DATA
+
+                      if (!snapshot.hasData ||
+                          snapshot.data!.metadata.isFromCache) {
+                        return const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(color: brown),
+                              SizedBox(height: 12),
+                              Text('Connecting to Firestore...'),
+                            ],
+                          ),
+                        );
+                      }
+
+                      // FILTER REPORTS
+
+                      final reports = snapshot.data!.docs.where((document) {
+                        if (_filter == 'all') {
+                          return true;
+                        }
+
+                        return document.data()['status'] == _filter;
+                      }).toList();
+
+                      // EMPTY STATE
+
+                      if (reports.isEmpty) {
+                        return const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.flag_outlined, size: 65, color: brown),
+
+                              SizedBox(height: 12),
+
+                              Text(
+                                'No reports found.',
+                                style: TextStyle(color: brown, fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      // DISPLAY REPORTS
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(12),
+                        itemCount: reports.length,
+                        itemBuilder: (context, index) {
+                          return TweenAnimationBuilder<double>(
+                            key: ValueKey(reports[index].id),
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: MediaQuery.of(context).disableAnimations
+                                ? Duration.zero
+                                : const Duration(milliseconds: 450),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, value, child) => Opacity(
+                              opacity: value,
+                              child: Transform.translate(
+                                offset: Offset(0, 14 * (1 - value)),
+                                child: child,
+                              ),
+                            ),
+                            child: _reportCard(reports[index]),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReportsPaw extends StatefulWidget {
+  const _ReportsPaw({required this.size, this.angle = 0.25, this.phase = 0.0});
+  final double size, angle, phase;
+
+  @override
+  State<_ReportsPaw> createState() => _ReportsPawState();
+}
+
+class _ReportsPawState extends State<_ReportsPaw>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 4),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.stop();
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: AnimatedBuilder(
+          animation: _controller,
+          child: Icon(
+            Icons.pets,
+            size: widget.size,
+            color: const Color(0xFFC88A4D).withValues(alpha: 0.18),
           ),
-        ],
+          builder: (context, child) {
+            final wave = MediaQuery.of(context).disableAnimations
+                ? 0.0
+                : math.sin(2 * math.pi * (_controller.value + widget.phase));
+            return Transform.translate(
+              offset: Offset(0, 6 * wave),
+              child: Transform.rotate(
+                angle: widget.angle + .07 * wave,
+                child: child,
+              ),
+            );
+          },
+        ),
       ),
     );
   }
