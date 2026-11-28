@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import '../lib/main.dart';
+import 'package:pawly/main.dart';
 
 void main() {
   test('PAWLY app constructor accepts signed-out state', () {
