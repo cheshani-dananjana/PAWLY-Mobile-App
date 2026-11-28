@@ -369,7 +369,7 @@ class _LoginScreenState extends State<LoginScreen>
             hintText: hint,
             hintStyle: TextStyle(
               fontSize: 14,
-              color: darkBrown.withOpacity(0.45),
+              color: darkBrown.withValues(alpha: 0.45),
             ),
             prefixIcon: Icon(icon, color: chocolateBrown, size: 21),
             suffixIcon: isPassword
@@ -386,7 +386,7 @@ class _LoginScreenState extends State<LoginScreen>
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
                         key: ValueKey(_obscurePassword),
-                        color: darkBrown.withOpacity(0.55),
+                        color: darkBrown.withValues(alpha: 0.55),
                         size: 20,
                       ),
                     ),
@@ -462,7 +462,7 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildLogo() {
     return ScaleTransition(
       scale: _scaleAnimation,
-      child: Container(
+      child: SizedBox(
         width: 138,
         height: 138,
         // Keep the animation transparent so the page background shows through.
@@ -511,12 +511,12 @@ class _LoginScreenState extends State<LoginScreen>
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: chocolateBrown.withOpacity(0.25),
+              color: chocolateBrown.withValues(alpha: 0.25),
               blurRadius: 15,
               offset: const Offset(0, 6),
             ),
             BoxShadow(
-              color: burntOrange.withOpacity(0.18),
+              color: burntOrange.withValues(alpha: 0.18),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -609,7 +609,7 @@ class _LoginScreenState extends State<LoginScreen>
                 width: 160,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: brightOrange.withOpacity(0.055),
+                  color: brightOrange.withValues(alpha: 0.055),
                 ),
               ),
             ),
@@ -622,7 +622,7 @@ class _LoginScreenState extends State<LoginScreen>
                 width: 180,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: chocolateBrown.withOpacity(0.045),
+                  color: chocolateBrown.withValues(alpha: 0.045),
                 ),
               ),
             ),
@@ -634,7 +634,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: _animatedPaw(
                 size: 39,
                 rotation: -0.35,
-                color: chocolateBrown.withOpacity(0.23),
+                color: chocolateBrown.withValues(alpha: 0.23),
                 phase: 0,
               ),
             ),
@@ -644,7 +644,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: _animatedPaw(
                 size: 48,
                 rotation: 0.35,
-                color: burntOrange.withOpacity(0.25),
+                color: burntOrange.withValues(alpha: 0.25),
                 phase: 1.2,
               ),
             ),
@@ -654,7 +654,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: _animatedPaw(
                 size: 23,
                 rotation: 0.25,
-                color: chocolateBrown.withOpacity(0.15),
+                color: chocolateBrown.withValues(alpha: 0.15),
                 phase: 2.1,
               ),
             ),
@@ -664,7 +664,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: _animatedPaw(
                 size: 27,
                 rotation: -0.3,
-                color: burntOrange.withOpacity(0.19),
+                color: burntOrange.withValues(alpha: 0.19),
                 phase: 3.2,
               ),
             ),
@@ -676,7 +676,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: _animatedPaw(
                 size: 34,
                 rotation: 0.4,
-                color: deepBrown.withOpacity(0.17),
+                color: deepBrown.withValues(alpha: 0.17),
                 phase: 2.7,
               ),
             ),
@@ -686,7 +686,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: _animatedPaw(
                 size: 40,
                 rotation: -0.3,
-                color: burntOrange.withOpacity(0.20),
+                color: burntOrange.withValues(alpha: 0.20),
                 phase: 4.1,
               ),
             ),
@@ -696,7 +696,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: _animatedPaw(
                 size: 22,
                 rotation: -0.4,
-                color: chocolateBrown.withOpacity(0.15),
+                color: chocolateBrown.withValues(alpha: 0.15),
                 phase: 5.0,
               ),
             ),
@@ -706,7 +706,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: _animatedPaw(
                 size: 25,
                 rotation: 0.3,
-                color: deepBrown.withOpacity(0.16),
+                color: deepBrown.withValues(alpha: 0.16),
                 phase: 0.8,
               ),
             ),
@@ -718,7 +718,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: _animatedPaw(
                 size: 35,
                 rotation: 0.25,
-                color: chocolateBrown.withOpacity(0.20),
+                color: chocolateBrown.withValues(alpha: 0.20),
                 phase: 3.8,
               ),
             ),
@@ -728,7 +728,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: _animatedPaw(
                 size: 28,
                 rotation: -0.25,
-                color: burntOrange.withOpacity(0.19),
+                color: burntOrange.withValues(alpha: 0.19),
                 phase: 1.8,
               ),
             ),
@@ -738,7 +738,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: _animatedPaw(
                 size: 23,
                 rotation: 0.3,
-                color: deepBrown.withOpacity(0.17),
+                color: deepBrown.withValues(alpha: 0.17),
                 phase: 4.7,
               ),
             ),
@@ -748,7 +748,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: _animatedPaw(
                 size: 22,
                 rotation: -0.2,
-                color: burntOrange.withOpacity(0.15),
+                color: burntOrange.withValues(alpha: 0.15),
                 phase: 2.4,
               ),
             ),
@@ -786,13 +786,13 @@ class _LoginScreenState extends State<LoginScreen>
                                           color: deepBrown,
                                           shape: BoxShape.circle,
                                           border: Border.all(
-                                            color: burntOrange.withOpacity(0.5),
+                                            color: burntOrange.withValues(alpha: 0.5),
                                             width: 1.2,
                                           ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: chocolateBrown.withOpacity(
-                                                0.22,
+                                              color: chocolateBrown.withValues(
+                                                alpha: 0.22,
                                               ),
                                               blurRadius: 10,
                                               offset: const Offset(0, 4),
@@ -841,8 +841,8 @@ class _LoginScreenState extends State<LoginScreen>
                                       borderRadius: BorderRadius.circular(30),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: chocolateBrown.withOpacity(
-                                            0.20,
+                                          color: chocolateBrown.withValues(
+                                            alpha: 0.20,
                                           ),
                                           blurRadius: 10,
                                           offset: const Offset(0, 3),
@@ -886,14 +886,14 @@ class _LoginScreenState extends State<LoginScreen>
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: chocolateBrown.withOpacity(
-                                            0.11,
+                                          color: chocolateBrown.withValues(
+                                            alpha: 0.11,
                                           ),
                                           blurRadius: 28,
                                           offset: const Offset(0, 12),
                                         ),
                                         BoxShadow(
-                                          color: burntOrange.withOpacity(0.07),
+                                          color: burntOrange.withValues(alpha: 0.07),
                                           blurRadius: 12,
                                           offset: const Offset(0, 3),
                                         ),
@@ -926,8 +926,8 @@ class _LoginScreenState extends State<LoginScreen>
                                               textAlign: TextAlign.center,
                                               style: TextStyle(
                                                 fontSize: 13.5,
-                                                color: darkBrown.withOpacity(
-                                                  0.78,
+                                                color: darkBrown.withValues(
+                                                  alpha: 0.78,
                                                 ),
                                                 fontWeight: FontWeight.w600,
                                               ),
@@ -1021,7 +1021,7 @@ class _LoginScreenState extends State<LoginScreen>
                                                   style: TextStyle(
                                                     fontSize: 11,
                                                     color: chocolateBrown
-                                                        .withOpacity(0.65),
+                                                        .withValues(alpha: 0.65),
                                                     fontWeight: FontWeight.w700,
                                                   ),
                                                 ),
@@ -1046,8 +1046,8 @@ class _LoginScreenState extends State<LoginScreen>
                                                 "Don't have an account? ",
                                                 style: TextStyle(
                                                   fontSize: 13.5,
-                                                  color: darkBrown.withOpacity(
-                                                    0.75,
+                                                  color: darkBrown.withValues(
+                                                    alpha: 0.75,
                                                   ),
                                                   fontWeight: FontWeight.w500,
                                                 ),
@@ -1089,7 +1089,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       Text(
                                         "Made with love for every pet",
                                         style: TextStyle(
-                                          color: deepBrown.withOpacity(0.8),
+                                          color: deepBrown.withValues(alpha: 0.8),
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
                                           letterSpacing: 0.2,
@@ -1155,7 +1155,7 @@ class _AffectionPainter extends CustomPainter {
       destination,
       Paint()
         ..filterQuality = FilterQuality.high
-        ..color = Colors.white.withOpacity(opacity),
+        ..color = Colors.white.withValues(alpha: opacity),
     );
   }
 
