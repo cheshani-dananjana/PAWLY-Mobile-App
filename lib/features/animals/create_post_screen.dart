@@ -7,7 +7,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+
+import '../../core/services/cloudinary_upload_service.dart';
+
 import 'package:latlong2/latlong.dart';
 
 import '../home/home_feed_screen.dart';
@@ -214,32 +216,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   // UPLOAD IMAGE TO FIREBASE STORAGE
   // ---------------------------------------------------------
 
-  Future<String> _uploadImageToFirebase(File imageFile, String userId) async {
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-    final storageReference = FirebaseStorage.instance
-        .ref()
-        .child('post_images')
-        .child(userId)
-        .child(fileName);
-
-    debugPrint('PAWLY: Uploading image to Firebase Storage...');
-
-    final uploadTask = storageReference.putFile(
-      imageFile,
-      SettableMetadata(contentType: 'image/jpeg'),
-    );
-
-    await uploadTask.timeout(const Duration(seconds: 60));
-
-    final downloadUrl = await storageReference.getDownloadURL();
-
-    debugPrint('PAWLY: Image uploaded successfully.');
-    debugPrint('PAWLY: Image URL: $downloadUrl');
-
-    return downloadUrl;
-  }
-
   // ---------------------------------------------------------
   // PUBLISH POST WITH IMAGE AND COORDINATES
   // ---------------------------------------------------------
@@ -306,10 +282,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
       _showSnack('Uploading animal photo... Please wait.');
 
-      final String downloadUrl = await _uploadImageToFirebase(
-        _selectedImage!,
-        user.uid,
-      );
+      final String downloadUrl =
+          await CloudinaryUploadService.uploadAnimalImage(_selectedImage!);
 
       if (!mounted) return;
 
