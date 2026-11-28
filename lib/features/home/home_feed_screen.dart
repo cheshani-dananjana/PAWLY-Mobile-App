@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../animals/create_post_screen.dart';
 import '../map/map_screen.dart';
 import '../profile/profile_screen.dart';
+import '../profile/notifications_screen.dart';
 
 class PawlyColors {
   PawlyColors._();
@@ -150,7 +151,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     if (_tabIndex == 0) {
       currentBody = _buildFeed();
     } else if (_tabIndex == 2) {
-      currentBody = MapScreen(); // Map Screen (Index 2)
+      currentBody = MapScreen();
     } else if (_tabIndex == 3) {
       currentBody = const _PlaceholderTab(
         icon: Icons.favorite_rounded,
@@ -158,7 +159,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
         message: 'Animals you save will show up here.',
       );
     } else if (_tabIndex == 4) {
-      currentBody = ProfileScreen(); // Profile Screen (Index 4)
+      currentBody = ProfileScreen();
     } else {
       currentBody = _buildFeed();
     }
@@ -349,6 +350,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     );
   }
 
+  // Bell icon opens the Notifications screen.
   Widget _buildBell() {
     return Stack(
       clipBehavior: Clip.none,
@@ -360,7 +362,11 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
           shadowColor: PawlyColors.burntOrange.withOpacity(0.25),
           child: InkWell(
             customBorder: const CircleBorder(),
-            onTap: () {},
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+              );
+            },
             child: const Padding(
               padding: EdgeInsets.all(10),
               child: Icon(
@@ -858,13 +864,9 @@ class PawlyBottomNav extends StatelessWidget {
             children: [
               _navItem(0, Icons.home_rounded, 'Home'),
               _navItem(1, Icons.add_circle_outline_rounded, 'Post'),
-              _navItem(2, Icons.map_rounded, 'Map'), // Map Tab (Index 2)
+              _navItem(2, Icons.map_rounded, 'Map'),
               _navItem(3, Icons.favorite_rounded, 'Saved'),
-              _navItem(
-                4,
-                Icons.person_rounded,
-                'Profile',
-              ), // Profile Tab (Index 4)
+              _navItem(4, Icons.person_rounded, 'Profile'),
             ],
           ),
         ),
